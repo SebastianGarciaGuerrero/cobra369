@@ -11,13 +11,10 @@ export default function App() {
     <div className="app">
       {view !== 'home' && (
         <nav className="top-nav">
-          <button className="btn-back" onClick={() => setView('home')}>
-            ← Volver
-          </button>
-          <span className="nav-title">Calculadora Cobranza</span>
+          <button className="btn-back" onClick={() => setView('home')}>← Volver</button>
+          <span className="nav-title">CalcCobro</span>
         </nav>
       )}
-
       {view === 'home' && <Home navigate={setView} />}
       {view === 'honorarios' && <Honorarios369 />}
       {view === 'abono' && <AbonoCalc />}

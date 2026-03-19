@@ -779,3 +779,119 @@ input {
   z-index: 1;
   line-height: 1;
 }
+
+/* ── PIE SECTION ── */
+.pie-section {
+  background: rgba(52, 211, 153, .06);
+  border: 1px solid rgba(52, 211, 153, .25);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.highlight-green-text {
+  color: var(--green);
+}
+
+/* ── REDONDEO ── */
+.round-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: .25rem;
+}
+
+.round-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 4px;
+  width: 1.4rem;
+  height: 1.1rem;
+  font-size: .55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.round-btn:hover {
+  background: rgba(99, 102, 241, .2);
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.ajuste-badge {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .1rem .4rem;
+  border-radius: 999px;
+  margin-left: .5rem;
+}
+
+.ajuste-badge.pos {
+  background: rgba(52, 211, 153, .15);
+  color: var(--green);
+}
+
+.ajuste-badge.neg {
+  background: rgba(248, 113, 113, .15);
+  color: var(--danger);
+}
+
+.val-ajustado {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── SCROLLBAR TABLA CUOTAS ── */
+.table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface2) transparent;
+}
+
+.table-wrap::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+  background: var(--surface2);
+  border-radius: 999px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
+
+/* ── BTN LOADING ── */
+.btn-loading {
+  opacity: .85;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.btn-spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+}
+
+.btn-emoji-spin {
+  display: inline-block;
+  animation: spin .8s linear infinite;
+  font-size: 1.1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

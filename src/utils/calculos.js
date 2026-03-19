@@ -119,17 +119,26 @@ export function calcularCapitalDesdeAbono(abono, uf) {
 
 
 export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf }) {
-    const capNuevo = capital - abonoInicial
-    const cuotaCap = capNuevo / cuotas                      // capital / n cuotas
-    const interesMes = capNuevo * (tasaMensual / 100)         // interés mensual fijo = capital × tasa
-    const interesTotal = interesMes * cuotas                  // capital × tasa × n cuotas
+    // Si hay PIE, desglozarlo en capital + honorarios con 3-6-9
+    let capPIE = 0
+    let honPIE = 0
+    if (abonoInicial > 0) {
+        const pie = calcularCapitalDesdeAbono(abonoInicial, uf)
+        capPIE = pie.capital
+        honPIE = pie.totalHonorarios
+    }
+
+    const capNuevo = capital - capPIE              // capital restante del pagaré
+    const cuotaCap = capNuevo / cuotas
+    const interesMes = capNuevo * (tasaMensual / 100)
+    const interesTotal = interesMes * cuotas
 
     const { totalHonorarios: honMes, hon1, hon2, hon3,
         monto1, monto2, monto3, capitalUF: cuotaUF } =
         calcularHonorarios369(cuotaCap, uf)
 
     const honTotal = honMes * cuotas
-    const totalCuota = cuotaCap + interesMes + honMes       // monto cuota mensual
+    const totalCuota = cuotaCap + interesMes + honMes
     const totalPagare = totalCuota * cuotas
 
     const filas = Array.from({ length: cuotas }, (_, i) => ({
@@ -141,7 +150,8 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
     }))
 
     return {
-        capNuevo, abonoInicial, cuotas, tasaMensual, uf,
+        capital, capNuevo, cuotas, tasaMensual, uf,
+        abonoInicial, capPIE, honPIE,
         cuotaCap, cuotaUF,
         interesMes, interesTotal,
         honMes, honTotal,

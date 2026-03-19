@@ -40,11 +40,16 @@ export default function AcuerdoCalc() {
     const [fechas, setFechas] = useState([])
     const [error, setError] = useState('')
     const [copiedTabla, setCopiedTabla] = useState(false)
+    const [ajuste, setAjuste] = useState(0)
+    const [loading, setLoading] = useState(false)
 
     function set(id, val) { setFields(p => ({ ...p, [id]: val })) }
 
     function handleCalcular() {
         setError('')
+        setLoading(true)
+        setTimeout(() => setLoading(false), 800)
+        setAjuste(0)
         const capital = parseCLPInput(fields.capital)
         const uf = parseCLPInput(fields.uf)
         const cuotas = parseInt(fields.cuotas, 10)
@@ -79,13 +84,13 @@ export default function AcuerdoCalc() {
             const td = tdStyle + `background-color:${bg};`
             const tdb = tdBold + `background-color:${bg};`
             return `<tr>
-        <td style="${td}">${f.nro}</td>
-        <td style="${td}">${fechas[i] ? formatFecha(fechas[i]) : ''}</td>
-        <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
-        <td style="${td}">${Math.round(f.interes).toLocaleString('es-CL')}</td>
-        <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
-        <td style="${tdb}">${Math.round(f.total).toLocaleString('es-CL')}</td>
-      </tr>`
+    <td style="${td}">${f.nro}</td>
+    <td style="${td}">${fechas[i] ? formatFecha(fechas[i]) : ''}</td>
+    <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
+    <td style="${td}">${interesAjustado.toLocaleString('es-CL')}</td>
+    <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
+    <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
+  </tr>`
         }).join('')
 
         const totalsRow = `<tr>
@@ -133,6 +138,18 @@ export default function AcuerdoCalc() {
         return `con vencimiento la primera cuota el día ${formatFechaTexto(f0)}, seguido de ${n - 1} cuota${n - 1 > 1 ? 's' : ''} con vencimiento los ${diaSig} de cada mes, a contar del ${formatFechaTexto(fechas[1])} al ${formatFechaTexto(fLast)} ambas fechas inclusive`
     })()
 
+    function handleRedondear(direccion) {
+        if (!result) return
+        const total = result.totalCuota + ajuste
+        const redondeado = direccion === 'up'
+            ? Math.ceil(total / 1000) * 1000
+            : Math.floor(total / 1000) * 1000
+        setAjuste(redondeado - result.totalCuota)
+    }
+
+    const totalAjustado = result ? Math.round(result.totalCuota + ajuste) : 0
+    const interesAjustado = result ? Math.round(result.interesMes + ajuste) : 0
+
     return (
         <div className="module-view">
             <div className="mv-header">
@@ -178,9 +195,18 @@ export default function AcuerdoCalc() {
                     </div>
                     <div className="form-group">
                         <label>Abono inicial (opcional)</label>
-                        <input type="text" inputMode="numeric" placeholder="Ej: 0"
-                            value={fields.abonoInicial} onChange={e => set('abonoInicial', e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Ej: 1.000.000"
+                            value={fields.abonoInicial}
+                            onChange={e => {
+                                const raw = e.target.value.replace(/\D/g, '')
+                                const formatted = raw === '' ? '' : Number(raw).toLocaleString('es-CL')
+                                set('abonoInicial', formatted)
+                            }}
+                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                        />
                     </div>
                 </div>
 
@@ -218,7 +244,17 @@ export default function AcuerdoCalc() {
                 </div>
 
                 {error && <p className="error-msg">{error}</p>}
-                <button className="btn-primary" onClick={handleCalcular}>Generar acuerdo</button>
+                <button
+                    className={`btn-primary ${loading ? 'btn-loading' : ''}`}
+                    onClick={handleCalcular}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <span className="btn-spinner-wrap">
+                            <span className="btn-spinner" /> Calculando...
+                        </span>
+                    ) : 'Generar acuerdo'}
+                </button>
             </div>
 
             {result && (
@@ -232,6 +268,43 @@ export default function AcuerdoCalc() {
                         <div className="fechas-box">
                             <span className="fechas-texto">{textoFechas}</span>
                             <CopyBtn value={textoFechas} />
+                        </div>
+                    )}
+
+                    {/* Desglose PIE */}
+                    {result.abonoInicial > 0 && (
+                        <div className="pie-section">
+                            <h4 className="section-label">Cálculo abono inicial (PIE)</h4>
+                            <div className="resumen-grid">
+                                <div className="resumen-row">
+                                    <span className="resumen-key">Total PIE recibido</span>
+                                    <div className="resumen-val-wrap">
+                                        <span className="resumen-val">{formatCLP(result.abonoInicial)}</span>
+                                        <CopyBtn value={Math.round(result.abonoInicial)} />
+                                    </div>
+                                </div>
+                                <div className="resumen-row">
+                                    <span className="resumen-key">Capital PIE (va a clínica)</span>
+                                    <div className="resumen-val-wrap">
+                                        <span className="resumen-val highlight-green-text">{formatCLP(result.capPIE)}</span>
+                                        <CopyBtn value={Math.round(result.capPIE)} />
+                                    </div>
+                                </div>
+                                <div className="resumen-row">
+                                    <span className="resumen-key">Honorarios PIE (3-6-9)</span>
+                                    <div className="resumen-val-wrap">
+                                        <span className="resumen-val col-hon">{formatCLP(result.honPIE)}</span>
+                                        <CopyBtn value={Math.round(result.honPIE)} />
+                                    </div>
+                                </div>
+                                <div className="resumen-row resumen-total-row">
+                                    <span className="resumen-key">Capital nuevo pagaré</span>
+                                    <div className="resumen-val-wrap">
+                                        <span className="resumen-val resumen-total">{formatCLP(result.capNuevo)}</span>
+                                        <CopyBtn value={Math.round(result.capNuevo)} />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -254,10 +327,19 @@ export default function AcuerdoCalc() {
                                 </div>
                             </div>
                             <div className="resumen-row">
-                                <span className="resumen-key">Interés mensual</span>
+                                <span className="resumen-key">
+                                    Interés mensual
+                                    {ajuste !== 0 && (
+                                        <span className={`ajuste-badge ${ajuste > 0 ? 'pos' : 'neg'}`}>
+                                            {ajuste > 0 ? '+' : ''}{Math.round(ajuste).toLocaleString('es-CL')}
+                                        </span>
+                                    )}
+                                </span>
                                 <div className="resumen-val-wrap">
-                                    <span className="resumen-val col-int">{formatCLP(result.interesMes)}</span>
-                                    <CopyBtn value={Math.round(result.interesMes)} />
+                                    <span className={`resumen-val col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                        {formatCLP(interesAjustado)}
+                                    </span>
+                                    <CopyBtn value={interesAjustado} />
                                 </div>
                             </div>
                             <div className="resumen-row">
@@ -270,8 +352,21 @@ export default function AcuerdoCalc() {
                             <div className="resumen-row resumen-total-row">
                                 <span className="resumen-key">Total cuota mensual</span>
                                 <div className="resumen-val-wrap">
-                                    <span className="resumen-val resumen-total">{formatCLP(result.totalCuota)}</span>
-                                    <CopyBtn value={Math.round(result.totalCuota)} />
+                                    <div className="round-controls">
+                                        <button
+                                            className="round-btn"
+                                            onClick={() => handleRedondear('up')}
+                                            title="Redondear hacia arriba al millar"
+                                        >▲</button>
+                                        <button
+                                            className="round-btn"
+                                            onClick={() => handleRedondear('down')}
+                                            title="Redondear hacia abajo al millar"
+                                        >▼</button>
+
+                                    </div>
+                                    <span className="resumen-val resumen-total">{formatCLP(totalAjustado)}</span>
+                                    <CopyBtn value={totalAjustado} />
                                 </div>
                             </div>
                         </div>
@@ -309,10 +404,14 @@ export default function AcuerdoCalc() {
                                             {fechas[i] ? formatFecha(fechas[i]) : <span className="no-fecha">—</span>}
                                         </td>
                                         <td>{formatCLP(f.capital)}</td>
-                                        <td className="col-int">{formatCLP(f.interes)}</td>
+                                        <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                            {formatCLP(interesAjustado)}
+                                        </td>
                                         <td className="col-hon">{formatCLP(f.honorarios)}</td>
-                                        <td className="col-total">{formatCLP(f.total)}</td>
-                                        <td><CopyBtn value={Math.round(f.total)} /></td>
+                                        <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                            {formatCLP(totalAjustado)}
+                                        </td>
+                                        <td><CopyBtn value={totalAjustado} /></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -320,10 +419,14 @@ export default function AcuerdoCalc() {
                                 <tr className="tfoot-row">
                                     <td colSpan="2">TOTALES</td>
                                     <td>{formatCLP(result.totalCapital)}</td>
-                                    <td className="col-int">{formatCLP(result.interesTotal)}</td>
+                                    <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                        {formatCLP(interesAjustado * result.cuotas)}
+                                    </td>
                                     <td className="col-hon">{formatCLP(result.honTotal)}</td>
-                                    <td className="col-total">{formatCLP(result.totalPagare)}</td>
-                                    <td><CopyBtn value={Math.round(result.totalPagare)} /></td>
+                                    <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                        {formatCLP(totalAjustado * result.cuotas)}
+                                    </td>
+                                    <td><CopyBtn value={totalAjustado * result.cuotas} /></td>
                                 </tr>
                             </tfoot>
                         </table>

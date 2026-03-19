@@ -50,7 +50,7 @@ export default function Honorarios369() {
             </div>
 
             {resultado && (
-                <div className="result-card" style={{ animation: 'fadeUp .25s ease' }}>
+                <div className="result-card">
                     <div className="result-header">
                         <h3>Resultado</h3>
                         <span className="badge-uf">{resultado.capitalUF.toFixed(4)} UF</span>
