@@ -34,9 +34,17 @@ export default function Honorarios369() {
                 <div className="form-row">
                     <div className="form-group">
                         <label>Capital ($ CLP)</label>
-                        <input type="text" inputMode="numeric" placeholder="Ej: 7.266.342"
-                            value={capital} onChange={e => setCapital(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Ej: 7.266.342"
+                            value={capital}
+                            onChange={e => {
+                                const raw = e.target.value.replace(/\D/g, '')
+                                setCapital(raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                            }}
+                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                        />
                     </div>
                     <div className="form-group">
                         <label>Valor UF del día</label>

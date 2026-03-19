@@ -46,9 +46,9 @@ export default function AcuerdoCalc() {
     function set(id, val) { setFields(p => ({ ...p, [id]: val })) }
 
     function handleCalcular() {
-        setError('')
         setLoading(true)
         setTimeout(() => setLoading(false), 800)
+        setError('')
         setAjuste(0)
         const capital = parseCLPInput(fields.capital)
         const uf = parseCLPInput(fields.uf)
@@ -167,9 +167,18 @@ export default function AcuerdoCalc() {
                 <div className="form-row">
                     <div className="form-group">
                         <label>Saldo capital ($ CLP)</label>
-                        <input type="text" inputMode="numeric" placeholder="Ej: 1.702.828"
-                            value={fields.capital} onChange={e => set('capital', e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Ej: 1.702.828"
+                            value={fields.capital}
+                            onChange={e => {
+                                const raw = e.target.value.replace(/\D/g, '')
+                                const formatted = raw === '' ? '' : Number(raw).toLocaleString('es-CL')
+                                set('capital', formatted)
+                            }}
+                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                        />
                     </div>
                     <div className="form-group">
                         <label>Valor UF del día</label>
