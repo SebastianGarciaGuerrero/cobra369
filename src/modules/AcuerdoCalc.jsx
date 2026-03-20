@@ -22,13 +22,31 @@ function generarFechas(fechaPrimera, diaSiguientes, totalCuotas) {
     const [d1, m1, y1] = fechaPrimera.split('-').map(Number)
     if (!d1 || !m1 || !y1) return Array(totalCuotas).fill(null)
     fechas.push(new Date(y1, m1 - 1, d1))
+
     for (let i = 1; i < totalCuotas; i++) {
         const prev = fechas[i - 1]
-        const nextMonth = new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
-        const dia = diaSiguientes || d1
-        fechas.push(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), dia))
+        const diaDeseado = diaSiguientes || d1
+        const nextYear = prev.getMonth() === 11 ? prev.getFullYear() + 1 : prev.getFullYear()
+        const nextMonth = (prev.getMonth() + 1) % 12
+
+        // Último día del mes siguiente
+        const ultimoDelMes = new Date(nextYear, nextMonth + 1, 0).getDate()
+
+        // Usa el día deseado o el último del mes si no existe
+        const diaFinal = Math.min(diaDeseado, ultimoDelMes)
+        fechas.push(new Date(nextYear, nextMonth, diaFinal))
     }
     return fechas
+}
+
+function parseFechaCL(str) {
+    if (!str || str.length < 8) return null
+    const [d, m, y] = str.split('-').map(Number)
+    if (!d || !m || !y) return null
+    const fecha = new Date(y, m - 1, d)
+    // Verifica que la fecha no haya "desbordado" (ej: 30 feb → 2 mar)
+    if (fecha.getDate() !== d || fecha.getMonth() !== m - 1 || fecha.getFullYear() !== y) return null
+    return fecha
 }
 
 export default function AcuerdoCalc() {
@@ -46,10 +64,32 @@ export default function AcuerdoCalc() {
     function set(id, val) { setFields(p => ({ ...p, [id]: val })) }
 
     function handleCalcular() {
-        setLoading(true)
-        setTimeout(() => setLoading(false), 800)
         setError('')
-        setAjuste(0)
+
+        // Validar fecha primera cuota
+        if (fields.fechaPrimera.trim() !== '') {
+            const fechaIngresada = parseFechaCL(fields.fechaPrimera)
+            if (!fechaIngresada) {
+                setError('La fecha de la primera cuota no es válida (ej: 30-02-2026 no existe).')
+                return
+            }
+            const hoy = new Date()
+            hoy.setHours(0, 0, 0, 0)
+            if (fechaIngresada < hoy) {
+                setError('La fecha de la primera cuota no puede ser anterior a hoy.')
+                return
+            }
+        }
+
+        // Validar día cuotas siguientes
+        if (fields.diaSiguientes.trim() !== '') {
+            const dia = parseInt(fields.diaSiguientes, 10)
+            if (isNaN(dia) || dia < 1 || dia > 31) {
+                setError('El día de cuotas siguientes debe ser entre 1 y 31.')
+                return
+            }
+        }
+
         const capital = parseCLPInput(fields.capital)
         const uf = parseCLPInput(fields.uf)
         const cuotas = parseInt(fields.cuotas, 10)
@@ -63,8 +103,11 @@ export default function AcuerdoCalc() {
         if (isNaN(tasaMensual) || tasaMensual < 0) { setError('Tasa inválida.'); return }
         if (abonoInicial < 0 || abonoInicial >= capital) { setError('Abono inicial debe ser menor al capital.'); return }
 
-        const r = calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf })
-        setResult(r)
+        // Todo válido → ahora sí activar loading
+        setLoading(true)
+        setTimeout(() => setLoading(false), 800)
+        setAjuste(0)
+        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf }))
         setFechas(generarFechas(fields.fechaPrimera, diaSig, cuotas))
     }
 
@@ -73,8 +116,8 @@ export default function AcuerdoCalc() {
 
         const headers = ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'GASTO COBRANZA', 'MONTO TOTAL CUOTA']
 
-        const thStyle = `border:1px solid #000;background-color:#1a5c38;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:center;font-size:11pt;font-family:Arial,sans-serif;`
-        const tdStyle = `border:1px solid #000;padding:5px 10px;text-align:center;font-size:11pt;font-family:Arial,sans-serif;color:#000000;`
+        const thStyle = `border:1px solid #000;background-color:#dce6f1;color:#000000;font-weight:bold;padding:5px 8px;text-align:center;font-size:10pt;font-family:Arial,sans-serif;`
+        const tdStyle = `border:1px solid #000;padding:4px 8px;text-align:center;font-size:10pt;font-family:Arial,sans-serif;color:#000000;background-color:#ffffff;`
         const tdBold = tdStyle + 'font-weight:bold;'
 
         const headerRow = `<tr>${headers.map(h => `<th style="${thStyle}">${h}</th>`).join('')}</tr>`
@@ -84,27 +127,27 @@ export default function AcuerdoCalc() {
             const td = tdStyle + `background-color:${bg};`
             const tdb = tdBold + `background-color:${bg};`
             return `<tr>
-    <td style="${td}">${f.nro}</td>
-    <td style="${td}">${fechas[i] ? formatFecha(fechas[i]) : ''}</td>
-    <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
-    <td style="${td}">${interesAjustado.toLocaleString('es-CL')}</td>
-    <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
-    <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
-  </tr>`
+            <td style="${td}">${f.nro}</td>
+            <td style="${td}">${fechas[i] ? formatFecha(fechas[i]) : ''}</td>
+            <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
+            <td style="${td}">${interesAjustado.toLocaleString('es-CL')}</td>
+            <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
+            <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
+        </tr>`
         }).join('')
 
         const totalsRow = `<tr>
-      <td colspan="2" style="${tdBold}background-color:#e8e8e8;">TOTALES</td>
-      <td style="${tdBold}background-color:#e8e8e8;">${Math.round(result.totalCapital).toLocaleString('es-CL')}</td>
-      <td style="${tdBold}background-color:#e8e8e8;">${Math.round(result.interesTotal).toLocaleString('es-CL')}</td>
-      <td style="${tdBold}background-color:#e8e8e8;">${Math.round(result.honTotal).toLocaleString('es-CL')}</td>
-      <td style="${tdBold}background-color:#e8e8e8;">${Math.round(result.totalPagare).toLocaleString('es-CL')}</td>
-    </tr>`
+            <td colspan="2" style="${tdBold}border-top:2px solid #000;">TOTALES</td>
+            <td style="${tdBold}border-top:2px solid #000;">${Math.round(result.totalCapital).toLocaleString('es-CL')}</td>
+            <td style="${tdBold}border-top:2px solid #000;">${(interesAjustado * result.cuotas).toLocaleString('es-CL')}</td>
+            <td style="${tdBold}border-top:2px solid #000;">${Math.round(result.honTotal).toLocaleString('es-CL')}</td>
+            <td style="${tdBold}border-top:2px solid #000;">${(totalAjustado * result.cuotas).toLocaleString('es-CL')}</td>
+        </tr>`
 
         const html = `<table style="border-collapse:collapse;width:100%;">
-      <thead>${headerRow}</thead>
-      <tbody>${bodyRows}${totalsRow}</tbody>
-    </table>`
+            <thead>${headerRow}</thead>
+            <tbody>${bodyRows}${totalsRow}</tbody>
+        </table>`
 
         const htmlBlob = new Blob([html], { type: 'text/html' })
         const textBlob = new Blob(
@@ -128,14 +171,31 @@ export default function AcuerdoCalc() {
         setTimeout(() => setCopiedTabla(false), 2500)
     }
 
+    const totalAjustado = result ? Math.round(result.totalCuota + ajuste) : 0
+    const interesAjustado = result ? Math.round(result.interesMes + ajuste) : 0
+
     const textoFechas = (() => {
         if (!result || fechas.length === 0 || !fechas[0]) return null
+
         const n = result.cuotas
         const f0 = fechas[0]
         const fLast = fechas[n - 1]
-        if (n === 1) return `con vencimiento el día ${formatFechaTexto(f0)}`
-        const diaSig = fields.diaSiguientes || f0.getDate()
-        return `con vencimiento la primera cuota el día ${formatFechaTexto(f0)}, seguido de ${n - 1} cuota${n - 1 > 1 ? 's' : ''} con vencimiento los ${diaSig} de cada mes, a contar del ${formatFechaTexto(fechas[1])} al ${formatFechaTexto(fLast)} ambas fechas inclusive`
+        const monto = formatCLP(totalAjustado)
+
+        const MESES_MIN = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+            'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+        function fechaTexto(date) {
+            return `${date.getDate()} de ${MESES_MIN[date.getMonth()]} de ${date.getFullYear()}`
+        }
+
+        if (n === 1) {
+            return `La deuda se pagará en 1 cuota de ${monto}. La cuota tendrá vencimiento el ${fechaTexto(f0)}.`
+        }
+
+        const diaVencimiento = fields.diaSiguientes || f0.getDate()
+
+        return `La deuda se pagará en ${n} cuotas iguales, mensuales y sucesivas de ${monto} cada una. La primera cuota tendrá vencimiento el ${fechaTexto(f0)}, y las cuotas restantes vencerán los días ${diaVencimiento} de cada mes, finalizando el ${fechaTexto(fLast)}, ambas fechas inclusive.`
     })()
 
     function handleRedondear(direccion) {
@@ -146,9 +206,6 @@ export default function AcuerdoCalc() {
             : Math.floor(total / 1000) * 1000
         setAjuste(redondeado - result.totalCuota)
     }
-
-    const totalAjustado = result ? Math.round(result.totalCuota + ajuste) : 0
-    const interesAjustado = result ? Math.round(result.interesMes + ajuste) : 0
 
     return (
         <div className="module-view">
@@ -234,6 +291,7 @@ export default function AcuerdoCalc() {
                             <input
                                 type="date"
                                 className="date-picker-hidden"
+                                min={new Date().toISOString().split('T')[0]}
                                 onChange={e => {
                                     if (!e.target.value) return
                                     const [y, m, d] = e.target.value.split('-')
@@ -446,15 +504,15 @@ export default function AcuerdoCalc() {
                         <div className="total-box">
                             <span className="t-label">Total pagaré</span>
                             <div className="t-row">
-                                <span className="t-value">{formatCLP(result.totalPagare)}</span>
-                                <CopyBtn value={Math.round(result.totalPagare)} />
+                                <span className="t-value">{formatCLP(totalAjustado * result.cuotas)}</span>
+                                <CopyBtn value={totalAjustado * result.cuotas} />
                             </div>
                         </div>
                         <div className="total-box highlight">
                             <span className="t-label">Monto cuota mensual</span>
                             <div className="t-row">
-                                <span className="t-value">{formatCLP(result.totalCuota)}</span>
-                                <CopyBtn value={Math.round(result.totalCuota)} />
+                                <span className="t-value">{formatCLP(totalAjustado)}</span>
+                                <CopyBtn value={totalAjustado} />
                             </div>
                         </div>
                     </div>
