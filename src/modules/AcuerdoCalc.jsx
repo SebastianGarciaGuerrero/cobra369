@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { calcularAcuerdo, formatCLP, parseCLPInput } from '../utils/calculos'
+import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 
 const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
@@ -51,8 +52,13 @@ function parseFechaCL(str) {
 
 export default function AcuerdoCalc() {
     const [fields, setFields] = useState({
-        capital: '', uf: '', cuotas: '', tasaMensual: '',
-        abonoInicial: '', fechaPrimera: '', diaSiguientes: '',
+        capital: '',
+        uf: cargarUF(),
+        cuotas: '',
+        tasaMensual: '',
+        abonoInicial: '',
+        fechaPrimera: '',
+        diaSiguientes: '',
     })
     const [result, setResult] = useState(null)
     const [fechas, setFechas] = useState([])
@@ -60,6 +66,7 @@ export default function AcuerdoCalc() {
     const [copiedTabla, setCopiedTabla] = useState(false)
     const [ajuste, setAjuste] = useState(0)
     const [loading, setLoading] = useState(false)
+    const [uf, setUf] = useState(() => cargarUF())
 
     function set(id, val) { setFields(p => ({ ...p, [id]: val })) }
 
@@ -239,9 +246,15 @@ export default function AcuerdoCalc() {
                     </div>
                     <div className="form-group">
                         <label>Valor UF del día</label>
-                        <input type="text" inputMode="decimal" placeholder="Ej: 39.841,72"
-                            value={fields.uf} onChange={e => set('uf', e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="Ej: 39.841,72"
+                            value={fields.uf}
+                            onChange={e => set('uf', e.target.value)}
+                            onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
+                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                        />
                     </div>
                 </div>
 

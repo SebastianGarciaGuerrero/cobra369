@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { calcularHonorarios369, formatCLP, parseCLPInput } from '../utils/calculos'
+import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 
 export default function Honorarios369() {
     const [capital, setCapital] = useState('')
-    const [uf, setUf] = useState('')
+    const [uf, setUf] = useState(() => cargarUF())
     const [resultado, setResultado] = useState(null)
     const [error, setError] = useState('')
 
@@ -48,9 +49,15 @@ export default function Honorarios369() {
                     </div>
                     <div className="form-group">
                         <label>Valor UF del día</label>
-                        <input type="text" inputMode="decimal" placeholder="Ej: 39.841,72"
-                            value={uf} onChange={e => setUf(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="Ej: 39.841,72"
+                            value={uf}
+                            onChange={e => setUf(e.target.value)}
+                            onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
+                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                        />
                     </div>
                 </div>
                 {error && <p className="error-msg">{error}</p>}

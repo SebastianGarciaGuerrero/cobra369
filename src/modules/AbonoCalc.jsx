@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { calcularCapitalDesdeAbono, formatCLP, parseCLPInput } from '../utils/calculos'
+import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
+
 
 export default function AbonoCalc() {
     const [abono, setAbono] = useState('')
-    const [uf, setUf] = useState('')
+    const [uf, setUf] = useState(() => cargarUF())
     const [result, setResult] = useState(null)
     const [error, setError] = useState('')
+
 
     function handleCalcular() {
         setError('')
@@ -59,6 +62,7 @@ export default function AbonoCalc() {
                             placeholder="Ej: 39.841,72"
                             value={uf}
                             onChange={e => setUf(e.target.value)}
+                            onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
                     </div>
