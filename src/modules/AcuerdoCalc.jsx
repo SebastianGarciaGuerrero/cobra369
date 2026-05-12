@@ -57,6 +57,7 @@ export default function AcuerdoCalc() {
         cuotas: '',
         tasaMensual: '',
         abonoInicial: '',
+        gastosJudiciales: '',
         fechaPrimera: '',
         diaSiguientes: '',
     })
@@ -74,6 +75,7 @@ export default function AcuerdoCalc() {
         setResult(null)
         setError('')
         setAjuste(0)
+        setFields(p => ({ ...p, gastosJudiciales: '' }))
     }
 
     function set(id, val) { setFields(p => ({ ...p, [id]: val })) }
@@ -110,6 +112,7 @@ export default function AcuerdoCalc() {
         const cuotas = parseInt(fields.cuotas, 10)
         const tasaMensual = parseCLPInput(fields.tasaMensual)
         const abonoInicial = fields.abonoInicial.trim() === '' ? 0 : parseCLPInput(fields.abonoInicial)
+        const gastosJudiciales = fields.gastosJudiciales.trim() === '' ? 0 : parseCLPInput(fields.gastosJudiciales)
         const diaSig = fields.diaSiguientes.trim() === '' ? null : parseInt(fields.diaSiguientes, 10)
 
         if (isNaN(capital) || capital <= 0) { setError('Capital inválido.'); return }
@@ -122,14 +125,18 @@ export default function AcuerdoCalc() {
         setLoading(true)
         setTimeout(() => setLoading(false), 800)
         setAjuste(0)
-        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad }))
+        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad, gastosJudiciales }))
         setFechas(generarFechas(fields.fechaPrimera, diaSig, cuotas))
     }
 
     function handleCopiarTabla() {
         if (!result) return
 
-        const headers = ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'GASTO COBRANZA', 'MONTO TOTAL CUOTA']
+        const conGastos = modalidad === 'judicial' && result.gastosJudPorCuota > 0
+
+        const headers = conGastos
+            ? ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'HONORARIOS (10%)', 'GASTOS JUDICIALES', 'MONTO TOTAL CUOTA']
+            : ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'GASTO COBRANZA', 'MONTO TOTAL CUOTA']
 
         const thStyle = `border:1px solid #000;background-color:#dce6f1;color:#000000;font-weight:bold;padding:5px 8px;text-align:center;font-size:10pt;font-family:Arial,sans-serif;`
         const tdStyle = `border:1px solid #000;padding:4px 8px;text-align:center;font-size:10pt;font-family:Arial,sans-serif;color:#000000;background-color:#ffffff;`
@@ -147,6 +154,7 @@ export default function AcuerdoCalc() {
             <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
             <td style="${td}">${interesAjustado.toLocaleString('es-CL')}</td>
             <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
+            ${conGastos ? `<td style="${td}">${Math.round(f.gastosJud).toLocaleString('es-CL')}</td>` : ''}
             <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
         </tr>`
         }).join('')
@@ -156,6 +164,7 @@ export default function AcuerdoCalc() {
             <td style="${tdBold}border-top:2px solid #000;">${Math.round(result.totalCapital).toLocaleString('es-CL')}</td>
             <td style="${tdBold}border-top:2px solid #000;">${(interesAjustado * result.cuotas).toLocaleString('es-CL')}</td>
             <td style="${tdBold}border-top:2px solid #000;">${Math.round(result.honTotal).toLocaleString('es-CL')}</td>
+            ${conGastos ? `<td style="${tdBold}border-top:2px solid #000;">${result.gastosJudTotal.toLocaleString('es-CL')}</td>` : ''}
             <td style="${tdBold}border-top:2px solid #000;">${(totalAjustado * result.cuotas).toLocaleString('es-CL')}</td>
         </tr>`
 
@@ -171,9 +180,10 @@ export default function AcuerdoCalc() {
                     f.nro,
                     fechas[i] ? formatFecha(fechas[i]) : '',
                     Math.round(f.capital),
-                    Math.round(f.interes),
+                    interesAjustado,
                     Math.round(f.honorarios),
-                    Math.round(f.total),
+                    ...(conGastos ? [Math.round(f.gastosJud)] : []),
+                    totalAjustado,
                 ].join('\t')).join('\n')],
             { type: 'text/plain' }
         )
@@ -226,7 +236,7 @@ export default function AcuerdoCalc() {
         <div className="module-view">
             <div className="mv-header">
                 <span className="mv-icon">📄</span>
-                <h2>Acuerdo de Pago</h2>
+                <h2>{modalidad === 'judicial' ? 'Avenimiento' : 'Acuerdo de Pago'}</h2>
             </div>
             <p className="mv-desc">
                 Genera un pagaré con cuotas iguales. Interés simple sobre capital total.
@@ -314,6 +324,26 @@ export default function AcuerdoCalc() {
                         />
                     </div>
                 </div>
+
+                {/* Gastos judiciales (solo modo judicial) */}
+                {modalidad === 'judicial' && (
+                    <div className="form-row single">
+                        <div className="form-group">
+                            <label>Gastos judiciales — total ($ CLP)</label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Ej: 350.000"
+                                value={fields.gastosJudiciales}
+                                onChange={e => {
+                                    const raw = e.target.value.replace(/\D/g, '')
+                                    set('gastosJudiciales', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                }}
+                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Fila 3: fechas */}
                 <div className="form-row">
@@ -452,13 +482,22 @@ export default function AcuerdoCalc() {
                             </div>
                             <div className="resumen-row">
                                 <span className="resumen-key">
-                                    {modalidad === 'judicial' ? 'Gastos judiciales mensual (10%)' : 'Gastos de cobranza mensual'}
+                                    {modalidad === 'judicial' ? 'Honorarios judiciales (10%)' : 'Gastos de cobranza mensual'}
                                 </span>
                                 <div className="resumen-val-wrap">
                                     <span className="resumen-val col-hon">{formatCLP(result.honMes)}</span>
                                     <CopyBtn value={Math.round(result.honMes)} />
                                 </div>
                             </div>
+                            {modalidad === 'judicial' && result.gastosJudPorCuota > 0 && (
+                                <div className="resumen-row">
+                                    <span className="resumen-key">Gastos judiciales por cuota</span>
+                                    <div className="resumen-val-wrap">
+                                        <span className="resumen-val col-hon">{formatCLP(result.gastosJudPorCuota)}</span>
+                                        <CopyBtn value={result.gastosJudPorCuota} />
+                                    </div>
+                                </div>
+                            )}
                             <div className="resumen-row resumen-total-row">
                                 <span className="resumen-key">Total cuota mensual</span>
                                 <div className="resumen-val-wrap">
@@ -493,54 +532,62 @@ export default function AcuerdoCalc() {
                         </button>
                     </div>
 
-                    <div className="table-wrap">
-                        <table className="tranche-table cuota-table">
-                            <thead>
-                                <tr>
-                                    <th>N°</th>
-                                    <th>Fecha</th>
-                                    <th>Abono clínica</th>
-                                    <th>Interés</th>
-                                    <th>Honorarios</th>
-                                    <th>Total cuota</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {result.filas.map((f, i) => (
-                                    <tr key={f.nro}>
-                                        <td className="col-nro">{f.nro}</td>
-                                        <td className="col-fecha">
-                                            {fechas[i] ? formatFecha(fechas[i]) : <span className="no-fecha">—</span>}
-                                        </td>
-                                        <td>{formatCLP(f.capital)}</td>
-                                        <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                            {formatCLP(interesAjustado)}
-                                        </td>
-                                        <td className="col-hon">{formatCLP(f.honorarios)}</td>
-                                        <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                            {formatCLP(totalAjustado)}
-                                        </td>
-                                        <td><CopyBtn value={totalAjustado} /></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot>
-                                <tr className="tfoot-row">
-                                    <td colSpan="2">TOTALES</td>
-                                    <td>{formatCLP(result.totalCapital)}</td>
-                                    <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                        {formatCLP(interesAjustado * result.cuotas)}
-                                    </td>
-                                    <td className="col-hon">{formatCLP(result.honTotal)}</td>
-                                    <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                        {formatCLP(totalAjustado * result.cuotas)}
-                                    </td>
-                                    <td><CopyBtn value={totalAjustado * result.cuotas} /></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                    {(() => {
+                        const conGastos = modalidad === 'judicial' && result.gastosJudPorCuota > 0
+                        return (
+                            <div className="table-wrap">
+                                <table className="tranche-table cuota-table">
+                                    <thead>
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Fecha</th>
+                                            <th>Abono clínica</th>
+                                            <th>Interés</th>
+                                            <th>Honorarios</th>
+                                            {conGastos && <th>Gastos jud.</th>}
+                                            <th>Total cuota</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {result.filas.map((f, i) => (
+                                            <tr key={f.nro}>
+                                                <td className="col-nro">{f.nro}</td>
+                                                <td className="col-fecha">
+                                                    {fechas[i] ? formatFecha(fechas[i]) : <span className="no-fecha">—</span>}
+                                                </td>
+                                                <td>{formatCLP(f.capital)}</td>
+                                                <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                                    {formatCLP(interesAjustado)}
+                                                </td>
+                                                <td className="col-hon">{formatCLP(f.honorarios)}</td>
+                                                {conGastos && <td className="col-hon">{formatCLP(f.gastosJud)}</td>}
+                                                <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                                    {formatCLP(totalAjustado)}
+                                                </td>
+                                                <td><CopyBtn value={totalAjustado} /></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className="tfoot-row">
+                                            <td colSpan="2">TOTALES</td>
+                                            <td>{formatCLP(result.totalCapital)}</td>
+                                            <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                                {formatCLP(interesAjustado * result.cuotas)}
+                                            </td>
+                                            <td className="col-hon">{formatCLP(result.honTotal)}</td>
+                                            {conGastos && <td className="col-hon">{formatCLP(result.gastosJudTotal)}</td>}
+                                            <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                                {formatCLP(totalAjustado * result.cuotas)}
+                                            </td>
+                                            <td><CopyBtn value={totalAjustado * result.cuotas} /></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        )
+                    })()}
 
                     {/* Totales finales */}
                     <div className="totals-grid">

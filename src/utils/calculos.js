@@ -160,7 +160,7 @@ export function calcularCapitalDesdeAbonoJudicial(abono, uf) {
  */
 
 
-export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad = 'extrajudicial' }) {
+export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad = 'extrajudicial', gastosJudiciales = 0 }) {
     const calcHon = modalidad === 'judicial'
         ? (cap) => calcularHonorariosJudicial(cap, uf)
         : (cap) => calcularHonorarios369(cap, uf)
@@ -186,9 +186,12 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
         monto1, monto2, monto3, capitalUF: cuotaUF } =
         calcHon(cuotaCap)
     const honMes = Math.round(honMesRaw)
+    const gastosJudPorCuota = (modalidad === 'judicial' && gastosJudiciales > 0)
+        ? Math.round(gastosJudiciales / cuotas)
+        : 0
 
     // Total es la SUMA de partes redondeadas → siempre cuadra
-    const totalCuota = cuotaCap + interesMes + honMes
+    const totalCuota = cuotaCap + interesMes + honMes + gastosJudPorCuota
 
     const honTotal = honMes * cuotas
     const interesTotal = interesMes * cuotas
@@ -199,6 +202,7 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
         capital: cuotaCap,
         interes: interesMes,
         honorarios: honMes,
+        gastosJud: gastosJudPorCuota,
         total: totalCuota,
     }))
 
@@ -210,6 +214,8 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
         honMes, honTotal,
         hon1, hon2, hon3,
         monto1, monto2, monto3,
+        gastosJudiciales, gastosJudPorCuota,
+        gastosJudTotal: gastosJudPorCuota * cuotas,
         totalCuota, totalPagare,
         totalCapital: capNuevo,
         filas,
