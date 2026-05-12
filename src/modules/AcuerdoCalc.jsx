@@ -67,6 +67,14 @@ export default function AcuerdoCalc() {
     const [ajuste, setAjuste] = useState(0)
     const [loading, setLoading] = useState(false)
     const [uf, setUf] = useState(() => cargarUF())
+    const [modalidad, setModalidad] = useState('extrajudicial')
+
+    function switchModalidad(nueva) {
+        setModalidad(nueva)
+        setResult(null)
+        setError('')
+        setAjuste(0)
+    }
 
     function set(id, val) { setFields(p => ({ ...p, [id]: val })) }
 
@@ -105,7 +113,7 @@ export default function AcuerdoCalc() {
         const diaSig = fields.diaSiguientes.trim() === '' ? null : parseInt(fields.diaSiguientes, 10)
 
         if (isNaN(capital) || capital <= 0) { setError('Capital inválido.'); return }
-        if (isNaN(uf) || uf <= 0) { setError('UF inválida.'); return }
+        if (modalidad === 'extrajudicial' && (isNaN(uf) || uf <= 0)) { setError('UF inválida.'); return }
         if (!cuotas || cuotas < 1) { setError('Número de cuotas inválido.'); return }
         if (isNaN(tasaMensual) || tasaMensual < 0) { setError('Tasa inválida.'); return }
         if (abonoInicial < 0 || abonoInicial >= capital) { setError('Abono inicial debe ser menor al capital.'); return }
@@ -114,7 +122,7 @@ export default function AcuerdoCalc() {
         setLoading(true)
         setTimeout(() => setLoading(false), 800)
         setAjuste(0)
-        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf }))
+        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad }))
         setFechas(generarFechas(fields.fechaPrimera, diaSig, cuotas))
     }
 
@@ -222,13 +230,29 @@ export default function AcuerdoCalc() {
             </div>
             <p className="mv-desc">
                 Genera un pagaré con cuotas iguales. Interés simple sobre capital total.
-                Gastos 3-6-9 calculados sobre la cuota capital.
+                {modalidad === 'judicial'
+                    ? ' Gastos judiciales al 10% sobre la cuota capital.'
+                    : ' Gastos 3-6-9 calculados sobre la cuota capital.'}
             </p>
 
             <div className="form-card">
+                <div className="mode-tabs">
+                    <button
+                        className={`mode-tab ${modalidad === 'extrajudicial' ? 'active' : ''}`}
+                        onClick={() => switchModalidad('extrajudicial')}
+                    >
+                        Extrajudicial
+                    </button>
+                    <button
+                        className={`mode-tab judicial ${modalidad === 'judicial' ? 'active' : ''}`}
+                        onClick={() => switchModalidad('judicial')}
+                    >
+                        Judicial
+                    </button>
+                </div>
 
                 {/* Fila 1: capital + UF */}
-                <div className="form-row">
+                <div className={`form-row ${modalidad === 'judicial' ? 'single' : ''}`}>
                     <div className="form-group">
                         <label>Saldo capital ($ CLP)</label>
                         <input
@@ -244,18 +268,20 @@ export default function AcuerdoCalc() {
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
                     </div>
-                    <div className="form-group">
-                        <label>Valor UF del día</label>
-                        <input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder="Ej: 39.841,72"
-                            value={fields.uf}
-                            onChange={e => set('uf', e.target.value)}
-                            onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
-                        />
-                    </div>
+                    {modalidad === 'extrajudicial' && (
+                        <div className="form-group">
+                            <label>Valor UF del día</label>
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Ej: 39.841,72"
+                                value={fields.uf}
+                                onChange={e => set('uf', e.target.value)}
+                                onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
+                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Fila 2: cuotas + tasa + abono */}
@@ -371,7 +397,9 @@ export default function AcuerdoCalc() {
                                     </div>
                                 </div>
                                 <div className="resumen-row">
-                                    <span className="resumen-key">Honorarios PIE (3-6-9)</span>
+                                    <span className="resumen-key">
+                                        {modalidad === 'judicial' ? 'Honorarios PIE (10%)' : 'Honorarios PIE (3-6-9)'}
+                                    </span>
                                     <div className="resumen-val-wrap">
                                         <span className="resumen-val col-hon">{formatCLP(result.honPIE)}</span>
                                         <CopyBtn value={Math.round(result.honPIE)} />
@@ -423,7 +451,9 @@ export default function AcuerdoCalc() {
                                 </div>
                             </div>
                             <div className="resumen-row">
-                                <span className="resumen-key">Gastos de cobranza mensual</span>
+                                <span className="resumen-key">
+                                    {modalidad === 'judicial' ? 'Gastos judiciales mensual (10%)' : 'Gastos de cobranza mensual'}
+                                </span>
                                 <div className="resumen-val-wrap">
                                     <span className="resumen-val col-hon">{formatCLP(result.honMes)}</span>
                                     <CopyBtn value={Math.round(result.honMes)} />

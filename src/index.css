@@ -870,6 +870,47 @@ input {
   background: var(--border);
 }
 
+/* ── MODE TABS (Extrajudicial / Judicial) ── */
+.mode-tabs {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: 1.25rem;
+}
+
+.mode-tab {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: .55rem 1rem;
+  font-size: .85rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.mode-tab:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.mode-tab.active {
+  background: rgba(99, 102, 241, .15);
+  border-color: var(--primary);
+  color: #a5b4fc;
+}
+
+.mode-tab.judicial.active {
+  background: rgba(251, 191, 36, .12);
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.form-row.single {
+  grid-template-columns: 1fr;
+}
+
 /* ── BTN LOADING ── */
 .btn-loading {
   opacity: .85;

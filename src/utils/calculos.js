@@ -54,6 +54,26 @@ export function calcularHonorarios369(capital, uf) {
 }
 
 /**
+ * Calcula honorarios judiciales con tasa plana del 10%
+ */
+export function calcularHonorariosJudicial(capital, uf) {
+    const honorarios = capital * 0.10
+    return {
+        capital,
+        uf,
+        capitalUF: uf ? capital / uf : null,
+        monto1: capital,
+        monto2: 0,
+        monto3: 0,
+        hon1: honorarios,
+        hon2: 0,
+        hon3: 0,
+        totalHonorarios: honorarios,
+        totalDeuda: capital + honorarios,
+    }
+}
+
+/**
  * Formatea número a pesos chilenos
  */
 export function formatCLP(n) {
@@ -111,6 +131,28 @@ export function calcularCapitalDesdeAbono(abono, uf) {
 }
 
 /**
+ * Dado un abono total (judicial 10%), calcula capital y honorarios.
+ * abono = capital * 1.10  →  capital = abono / 1.10
+ */
+export function calcularCapitalDesdeAbonoJudicial(abono, uf) {
+    if (abono <= 0) return null
+    const capital = abono / 1.10
+    const honorarios = capital * 0.10
+    return {
+        abono,
+        capital,
+        capitalUF: uf ? capital / uf : null,
+        totalHonorarios: honorarios,
+        hon1: honorarios,
+        hon2: 0,
+        hon3: 0,
+        monto1: capital,
+        monto2: 0,
+        monto3: 0,
+    }
+}
+
+/**
  * Genera un acuerdo de pago con cuotas iguales.
  *
  * Interés: simple sobre capital total (misma cuota cada mes)
@@ -118,11 +160,19 @@ export function calcularCapitalDesdeAbono(abono, uf) {
  */
 
 
-export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf }) {
+export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad = 'extrajudicial' }) {
+    const calcHon = modalidad === 'judicial'
+        ? (cap) => calcularHonorariosJudicial(cap, uf)
+        : (cap) => calcularHonorarios369(cap, uf)
+
+    const calcAbono = modalidad === 'judicial'
+        ? (abono) => calcularCapitalDesdeAbonoJudicial(abono, uf)
+        : (abono) => calcularCapitalDesdeAbono(abono, uf)
+
     let capPIE = 0
     let honPIE = 0
     if (abonoInicial > 0) {
-        const pie = calcularCapitalDesdeAbono(abonoInicial, uf)
+        const pie = calcAbono(abonoInicial)
         capPIE = pie.capital
         honPIE = pie.totalHonorarios
     }
@@ -134,7 +184,7 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
     const interesMes = Math.round(capNuevo * (tasaMensual / 100))
     const { totalHonorarios: honMesRaw, hon1, hon2, hon3,
         monto1, monto2, monto3, capitalUF: cuotaUF } =
-        calcularHonorarios369(cuotaCap, uf)
+        calcHon(cuotaCap)
     const honMes = Math.round(honMesRaw)
 
     // Total es la SUMA de partes redondeadas → siempre cuadra

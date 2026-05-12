@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcularCapitalDesdeAbono, formatCLP, parseCLPInput } from '../utils/calculos'
+import { calcularCapitalDesdeAbono, calcularCapitalDesdeAbonoJudicial, formatCLP, parseCLPInput } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 
@@ -9,6 +9,7 @@ export default function AbonoCalc() {
     const [uf, setUf] = useState(() => cargarUF())
     const [result, setResult] = useState(null)
     const [error, setError] = useState('')
+    const [modalidad, setModalidad] = useState('extrajudicial')
 
 
     function handleCalcular() {
@@ -16,17 +17,29 @@ export default function AbonoCalc() {
         const a = parseCLPInput(abono)
         const u = parseCLPInput(uf)
         if (isNaN(a) || a <= 0) { setError('Ingresa un monto de abono válido mayor a 0.'); return }
-        if (isNaN(u) || u <= 0) { setError('Ingresa un valor de UF válido.'); return }
-        const r = calcularCapitalDesdeAbono(a, u)
+        if (modalidad === 'extrajudicial' && (isNaN(u) || u <= 0)) { setError('Ingresa un valor de UF válido.'); return }
+        const r = modalidad === 'judicial'
+            ? calcularCapitalDesdeAbonoJudicial(a, null)
+            : calcularCapitalDesdeAbono(a, u)
         if (!r) { setError('No se pudo calcular. Revisa los valores.'); return }
         setResult(r)
     }
 
-    const tramos = result ? [
-        { label: 'Hasta 10 UF', monto: result.monto1, pct: '9%', hon: result.hon1 },
-        result.monto2 > 0 && { label: '11 a 50 UF', monto: result.monto2, pct: '6%', hon: result.hon2 },
-        result.monto3 > 0 && { label: 'Resto (> 50 UF)', monto: result.monto3, pct: '3%', hon: result.hon3 },
-    ].filter(Boolean) : []
+    function switchModalidad(nueva) {
+        setModalidad(nueva)
+        setResult(null)
+        setError('')
+    }
+
+    const tramos = result
+        ? modalidad === 'judicial'
+            ? [{ label: 'Capital total', monto: result.monto1, pct: '10%', hon: result.hon1 }]
+            : [
+                { label: 'Hasta 10 UF', monto: result.monto1, pct: '9%', hon: result.hon1 },
+                result.monto2 > 0 && { label: '11 a 50 UF', monto: result.monto2, pct: '6%', hon: result.hon2 },
+                result.monto3 > 0 && { label: 'Resto (> 50 UF)', monto: result.monto3, pct: '3%', hon: result.hon3 },
+            ].filter(Boolean)
+        : []
 
     return (
         <div className="module-view">
@@ -39,7 +52,22 @@ export default function AbonoCalc() {
             </p>
 
             <div className="form-card">
-                <div className="form-row">
+                <div className="mode-tabs">
+                    <button
+                        className={`mode-tab ${modalidad === 'extrajudicial' ? 'active' : ''}`}
+                        onClick={() => switchModalidad('extrajudicial')}
+                    >
+                        Extrajudicial
+                    </button>
+                    <button
+                        className={`mode-tab judicial ${modalidad === 'judicial' ? 'active' : ''}`}
+                        onClick={() => switchModalidad('judicial')}
+                    >
+                        Judicial
+                    </button>
+                </div>
+
+                <div className={`form-row ${modalidad === 'judicial' ? 'single' : ''}`}>
                     <div className="form-group">
                         <label>Monto abono total ($ CLP)</label>
                         <input
@@ -54,18 +82,20 @@ export default function AbonoCalc() {
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
                     </div>
-                    <div className="form-group">
-                        <label>Valor UF del día</label>
-                        <input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder="Ej: 39.841,72"
-                            value={uf}
-                            onChange={e => setUf(e.target.value)}
-                            onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()}
-                        />
-                    </div>
+                    {modalidad === 'extrajudicial' && (
+                        <div className="form-group">
+                            <label>Valor UF del día</label>
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Ej: 39.841,72"
+                                value={uf}
+                                onChange={e => setUf(e.target.value)}
+                                onBlur={e => { if (e.target.value) guardarUF(e.target.value) }}
+                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {error && <p className="error-msg">{error}</p>}
@@ -79,7 +109,9 @@ export default function AbonoCalc() {
                 <div className="result-card">
                     <div className="result-header">
                         <h3>Resultado</h3>
-                        <span className="badge-uf">{result.capitalUF.toFixed(4)} UF</span>
+                        {result.capitalUF !== null && (
+                            <span className="badge-uf">{result.capitalUF.toFixed(4)} UF</span>
+                        )}
                     </div>
 
                     <table className="tranche-table">
