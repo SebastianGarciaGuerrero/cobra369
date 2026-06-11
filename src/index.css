@@ -878,6 +878,42 @@ input {
   background: var(--border);
 }
 
+/* ── LAYOUT CUADRICULADO ACUERDO (solo PC) ── */
+.module-view.acuerdo-wide {
+  max-width: 1240px;
+}
+
+.acuerdo-layout {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.acuerdo-layout.two-col {
+  max-width: none;
+  display: grid;
+  grid-template-columns: 430px minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.acuerdo-layout.two-col .form-card {
+  position: sticky;
+  top: 70px;
+  margin-bottom: 0;
+}
+
+.result-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.result-grid-2 .pie-section,
+.result-grid-2 .resumen-section {
+  margin-bottom: 0;
+}
+
 /* ── MODE TABS (Extrajudicial / Judicial) ── */
 .mode-tabs {
   display: flex;

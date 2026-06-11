@@ -378,8 +378,9 @@ export default function AcuerdoCalc() {
             return `${date.getDate()} de ${MESES_MIN[date.getMonth()]} de ${date.getFullYear()}`
         }
 
+        const fAbono = parseFechaCL(fields.fechaAbono)
         const textoPIE = result.abonoInicial > 0
-            ? `Se efectúa un abono inicial (PIE) de ${formatCLP(result.abonoInicial)}. `
+            ? `Se efectúa un abono inicial (PIE) de ${formatCLP(result.abonoInicial)}${fAbono ? ` con fecha ${fechaTexto(fAbono)}` : ''}. `
             : ''
         const sujeto = result.abonoInicial > 0 ? 'El saldo restante' : 'La deuda'
 
@@ -402,7 +403,7 @@ export default function AcuerdoCalc() {
     }
 
     return (
-        <div className="module-view">
+        <div className="module-view acuerdo-wide">
             <div className="mv-header">
                 <span className="mv-icon">📄</span>
                 <h2>{modalidad === 'judicial' ? 'Avenimiento' : 'Acuerdo de Pago'}</h2>
@@ -414,6 +415,7 @@ export default function AcuerdoCalc() {
                     : ' Gastos 3-6-9 calculados sobre la cuota capital.'}
             </p>
 
+            <div className={`acuerdo-layout ${result ? 'two-col' : ''}`}>
             <div className="form-card">
                 <div className="mode-tabs">
                     <button
@@ -601,7 +603,8 @@ export default function AcuerdoCalc() {
                         </div>
                     )}
 
-                    {/* Desglose PIE */}
+                    {/* Desglose PIE + Resumen mensual en grilla */}
+                    <div className="result-grid-2">
                     {result.abonoInicial > 0 && (
                         <div className="pie-section">
                             <h4 className="section-label">Cálculo abono inicial (PIE)</h4>
@@ -714,6 +717,7 @@ export default function AcuerdoCalc() {
                             </div>
                         </div>
                     </div>
+                    </div>
 
                     {/* Tabla de cuotas */}
                     <div className="section-header-row">
@@ -820,6 +824,7 @@ export default function AcuerdoCalc() {
 
                 </div>
             )}
+            </div>
         </div>
     )
 }
