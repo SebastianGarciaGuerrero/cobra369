@@ -276,15 +276,15 @@ export default function AcuerdoCalc() {
         }
 
         const tx = M + (logoOk ? logoW + 28 : 0)
-        ctx.fillStyle = '#111111'
+        ctx.fillStyle = '#3d3d3d'
         ctx.font = 'bold 20px Arial'
         ctx.fillText(modalidad === 'judicial' ? 'RESUMEN DE AVENIMIENTO' : 'RESUMEN DE ACUERDO DE PAGO', tx, 62)
         ctx.fillStyle = '#777777'
         ctx.font = 'bold 11px Arial'
         ctx.fillText('DOCUMENTO DE REFERENCIA — NO OFICIAL', tx, 84)
 
-        // Línea divisoria negra
-        ctx.fillStyle = '#111111'
+        // Línea divisoria gris oscura
+        ctx.fillStyle = '#4a4a4a'
         ctx.fillRect(0, headerH - 3, W, 3)
 
         // Datos principales
@@ -298,7 +298,7 @@ export default function AcuerdoCalc() {
             ctx.fillStyle = '#6e6e6e'
             ctx.font = '14px Arial'
             ctx.fillText(k, M, y)
-            ctx.fillStyle = '#111111'
+            ctx.fillStyle = '#3d3d3d'
             ctx.font = 'bold 14px Arial'
             ctx.fillText(v, M + 180, y)
             y += infoLineH
@@ -306,7 +306,7 @@ export default function AcuerdoCalc() {
 
         // Cabecera de tabla
         y = tableTop
-        ctx.fillStyle = '#1a1a1a'
+        ctx.fillStyle = '#4a4a4a'
         ctx.fillRect(M, y, W - 2 * M, 30)
         ctx.fillStyle = '#f4f4f4'
         ctx.font = 'bold 12px Arial'
@@ -321,12 +321,12 @@ export default function AcuerdoCalc() {
         filasImg.forEach((f, i) => {
             ctx.fillStyle = i % 2 === 1 ? '#e8e8e8' : '#ffffff'
             ctx.fillRect(M, y, W - 2 * M, rowH)
-            ctx.fillStyle = '#1a1a1a'
+            ctx.fillStyle = '#3d3d3d'
             ctx.font = '13px Arial'
             ctx.fillText(f.label, M + 12, y + 21)
             ctx.fillStyle = '#6e6e6e'
             ctx.fillText(f.fecha, M + 230, y + 21)
-            ctx.fillStyle = '#1a1a1a'
+            ctx.fillStyle = '#3d3d3d'
             ctx.textAlign = 'right'
             ctx.font = 'bold 13px Arial'
             ctx.fillText(formatCLP(f.total), W - M - 12, y + 21)
@@ -335,7 +335,7 @@ export default function AcuerdoCalc() {
         })
 
         // Fila TOTAL
-        ctx.fillStyle = '#000000'
+        ctx.fillStyle = '#3d3d3d'
         ctx.fillRect(M, y + 6, W - 2 * M, totalRowH - 12)
         ctx.fillStyle = '#ffffff'
         ctx.font = 'bold 14px Arial'
