@@ -10,6 +10,7 @@ export default function AbonoCalc() {
     const [result, setResult] = useState(null)
     const [error, setError] = useState('')
     const [modalidad, setModalidad] = useState('extrajudicial')
+    const [calcId, setCalcId] = useState(0)
 
 
     function handleCalcular() {
@@ -23,6 +24,7 @@ export default function AbonoCalc() {
             : calcularCapitalDesdeAbono(a, u)
         if (!r) { setError('No se pudo calcular. Revisa los valores.'); return }
         setResult(r)
+        setCalcId(n => n + 1)
     }
 
     function switchModalidad(nueva) {
@@ -42,7 +44,7 @@ export default function AbonoCalc() {
         : []
 
     return (
-        <div className="module-view">
+        <div className="module-view mv-wide">
             <div className="mv-header">
                 <span className="mv-icon">💰</span>
                 <h2>Cálculo de Abono</h2>
@@ -51,6 +53,7 @@ export default function AbonoCalc() {
                 Ingresa el monto total recibido. El sistema calcula honorarios y capital neto.
             </p>
 
+            <div className={`calc-layout ${result ? 'two-col' : ''}`}>
             <div className="form-card">
                 <div className="mode-tabs">
                     <button
@@ -108,7 +111,10 @@ export default function AbonoCalc() {
             {result && (
                 <div className="result-card">
                     <div className="result-header">
-                        <h3>Resultado</h3>
+                        <div className="rh-left">
+                            <h3>Resultado</h3>
+                            <span key={calcId} className="calc-badge">✓ Calculado</span>
+                        </div>
                         {result.capitalUF !== null && (
                             <span className="badge-uf">{result.capitalUF.toFixed(4)} UF</span>
                         )}
@@ -162,6 +168,7 @@ export default function AbonoCalc() {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     )
 }

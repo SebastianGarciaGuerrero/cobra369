@@ -878,17 +878,17 @@ input {
   background: var(--border);
 }
 
-/* ── LAYOUT CUADRICULADO ACUERDO (solo PC) ── */
-.module-view.acuerdo-wide {
+/* ── LAYOUT CUADRICULADO (solo PC) ── */
+.module-view.mv-wide {
   max-width: 1240px;
 }
 
-.acuerdo-layout {
+.calc-layout {
   max-width: 680px;
   margin: 0 auto;
 }
 
-.acuerdo-layout.two-col {
+.calc-layout.two-col {
   max-width: none;
   display: grid;
   grid-template-columns: 430px minmax(0, 1fr);
@@ -896,10 +896,48 @@ input {
   align-items: start;
 }
 
-.acuerdo-layout.two-col .form-card {
+.calc-layout.two-col .form-card {
   position: sticky;
   top: 70px;
   margin-bottom: 0;
+}
+
+/* ── BADGE CALCULADO (animación sobria) ── */
+.rh-left {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.calc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(52, 211, 153, .12);
+  border: 1px solid rgba(52, 211, 153, .3);
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  animation: popIn .35s ease;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(.8);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .result-grid-2 {

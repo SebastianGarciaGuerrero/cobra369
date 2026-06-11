@@ -9,6 +9,7 @@ export default function Honorarios369() {
     const [resultado, setResultado] = useState(null)
     const [error, setError] = useState('')
     const [modalidad, setModalidad] = useState('extrajudicial')
+    const [calcId, setCalcId] = useState(0)
 
     function handleCalcular() {
         setError('')
@@ -21,6 +22,7 @@ export default function Honorarios369() {
                 ? calcularHonorariosJudicial(cap, null)
                 : calcularHonorarios369(cap, ufV)
         )
+        setCalcId(n => n + 1)
     }
 
     function switchModalidad(nueva) {
@@ -40,12 +42,13 @@ export default function Honorarios369() {
         : []
 
     return (
-        <div className="module-view">
+        <div className="module-view mv-wide">
             <div className="mv-header">
                 <span className="mv-icon">📊</span>
                 <h2>Honorarios 3-6-9</h2>
             </div>
 
+            <div className={`calc-layout ${resultado ? 'two-col' : ''}`}>
             <div className="form-card">
                 <div className="mode-tabs">
                     <button
@@ -99,7 +102,10 @@ export default function Honorarios369() {
             {resultado && (
                 <div className="result-card">
                     <div className="result-header">
-                        <h3>Resultado</h3>
+                        <div className="rh-left">
+                            <h3>Resultado</h3>
+                            <span key={calcId} className="calc-badge">✓ Calculado</span>
+                        </div>
                         {resultado.capitalUF !== null && (
                             <span className="badge-uf">{resultado.capitalUF.toFixed(4)} UF</span>
                         )}
@@ -140,6 +146,7 @@ export default function Honorarios369() {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     )
 }

@@ -72,6 +72,7 @@ export default function AcuerdoCalc() {
     const [loading, setLoading] = useState(false)
     const [uf, setUf] = useState(() => cargarUF())
     const [modalidad, setModalidad] = useState('extrajudicial')
+    const [calcId, setCalcId] = useState(0)
 
     function switchModalidad(nueva) {
         setModalidad(nueva)
@@ -136,6 +137,7 @@ export default function AcuerdoCalc() {
         setAjuste(0)
         setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad, gastosJudiciales }))
         setFechas(generarFechas(fields.fechaPrimera, diaSig, cuotas))
+        setCalcId(n => n + 1)
     }
 
     function handleCopiarTabla() {
@@ -403,7 +405,7 @@ export default function AcuerdoCalc() {
     }
 
     return (
-        <div className="module-view acuerdo-wide">
+        <div className="module-view mv-wide">
             <div className="mv-header">
                 <span className="mv-icon">📄</span>
                 <h2>{modalidad === 'judicial' ? 'Avenimiento' : 'Acuerdo de Pago'}</h2>
@@ -415,7 +417,7 @@ export default function AcuerdoCalc() {
                     : ' Gastos 3-6-9 calculados sobre la cuota capital.'}
             </p>
 
-            <div className={`acuerdo-layout ${result ? 'two-col' : ''}`}>
+            <div className={`calc-layout ${result ? 'two-col' : ''}`}>
             <div className="form-card">
                 <div className="mode-tabs">
                     <button
@@ -592,7 +594,10 @@ export default function AcuerdoCalc() {
             {result && (
                 <div className="result-card">
                     <div className="result-header">
-                        <h3>Acuerdo generado</h3>
+                        <div className="rh-left">
+                            <h3>Acuerdo generado</h3>
+                            <span key={calcId} className="calc-badge">✓ Calculado</span>
+                        </div>
                     </div>
 
                     {/* Texto de fechas copiable */}
