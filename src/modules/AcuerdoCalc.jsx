@@ -60,6 +60,7 @@ export default function AcuerdoCalc() {
         gastosJudiciales: '',
         fechaPrimera: '',
         diaSiguientes: '',
+        fechaAbono: '',
     })
     const [result, setResult] = useState(null)
     const [fechas, setFechas] = useState([])
@@ -97,6 +98,12 @@ export default function AcuerdoCalc() {
                 setError('La fecha de la primera cuota no puede ser anterior a hoy.')
                 return
             }
+        }
+
+        // Validar fecha de abono (PIE)
+        if (fields.fechaAbono.trim() !== '' && !parseFechaCL(fields.fechaAbono)) {
+            setError('La fecha del abono no es válida (formato DD-MM-YYYY).')
+            return
         }
 
         // Validar día cuotas siguientes
@@ -148,7 +155,7 @@ export default function AcuerdoCalc() {
 
         const pieRow = conPIE ? `<tr>
             <td style="${tdBold}">PIE</td>
-            <td style="${tdStyle}"></td>
+            <td style="${tdStyle}">${fields.fechaAbono.trim() !== '' ? fields.fechaAbono : ''}</td>
             <td style="${tdStyle}">${Math.round(result.capPIE).toLocaleString('es-CL')}</td>
             <td style="${tdStyle}">0</td>
             <td style="${tdStyle}">${Math.round(result.honPIE).toLocaleString('es-CL')}</td>
@@ -216,7 +223,11 @@ export default function AcuerdoCalc() {
 
         const conPIE = result.abonoInicial > 0
         const filasImg = []
-        if (conPIE) filasImg.push({ label: 'PIE (abono inicial)', fecha: 'Al contado', total: Math.round(result.abonoInicial) })
+        if (conPIE) filasImg.push({
+            label: 'PIE (abono inicial)',
+            fecha: fields.fechaAbono.trim() !== '' ? fields.fechaAbono : 'Al contado',
+            total: Math.round(result.abonoInicial),
+        })
         result.filas.forEach((f, i) => filasImg.push({
             label: `Cuota ${f.nro}`,
             fecha: fechas[i] ? formatFecha(fechas[i]) : '—',
@@ -232,7 +243,7 @@ export default function AcuerdoCalc() {
         const tableTop = infoTop + infoLines * infoLineH + 22
         const rowH = 32
         const totalRowH = 46
-        const footerH = 70
+        const footerH = 52
         const H = tableTop + 30 + filasImg.length * rowH + totalRowH + footerH
 
         const canvas = document.createElement('canvas')
@@ -325,7 +336,6 @@ export default function AcuerdoCalc() {
         ctx.fillStyle = '#94a3b8'
         ctx.font = 'italic 11px Arial'
         ctx.fillText('Este resumen es solo informativo y no constituye un documento oficial.', M, y + 22)
-        ctx.fillText('Los valores definitivos constan en el documento firmado entre las partes.', M, y + 38)
 
         const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
@@ -492,7 +502,7 @@ export default function AcuerdoCalc() {
                 )}
 
                 {/* Fila 3: fechas */}
-                <div className="form-row">
+                <div className="form-row three-cols-form">
                     <div className="form-group">
                         <label>Fecha 1ª cuota</label>
                         <div className="input-date-wrap">
@@ -507,6 +517,7 @@ export default function AcuerdoCalc() {
                                 type="date"
                                 className="date-picker-hidden"
                                 min={new Date().toISOString().split('T')[0]}
+                                onClick={e => { try { e.target.showPicker() } catch { /* navegador sin soporte */ } }}
                                 onChange={e => {
                                     if (!e.target.value) return
                                     const [y, m, d] = e.target.value.split('-')
@@ -522,6 +533,30 @@ export default function AcuerdoCalc() {
                         <input type="text" inputMode="numeric" placeholder="Ej: 25"
                             value={fields.diaSiguientes} onChange={e => set('diaSiguientes', e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                    </div>
+                    <div className="form-group">
+                        <label>Fecha abono (opcional)</label>
+                        <div className="input-date-wrap">
+                            <input
+                                type="text"
+                                placeholder="DD-MM-YYYY"
+                                value={fields.fechaAbono}
+                                onChange={e => set('fechaAbono', e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                            />
+                            <input
+                                type="date"
+                                className="date-picker-hidden"
+                                onClick={e => { try { e.target.showPicker() } catch { /* navegador sin soporte */ } }}
+                                onChange={e => {
+                                    if (!e.target.value) return
+                                    const [y, m, d] = e.target.value.split('-')
+                                    set('fechaAbono', `${d}-${m}-${y}`)
+                                }}
+                                title="Elegir desde calendario"
+                            />
+                            <span className="date-icon">📅</span>
+                        </div>
                     </div>
                 </div>
 
@@ -708,7 +743,9 @@ export default function AcuerdoCalc() {
                                         {conPIE && (
                                             <tr>
                                                 <td className="col-nro">PIE</td>
-                                                <td className="col-fecha"><span className="no-fecha">—</span></td>
+                                                <td className="col-fecha">
+                                                    {fields.fechaAbono.trim() !== '' ? fields.fechaAbono : <span className="no-fecha">—</span>}
+                                                </td>
                                                 <td>{formatCLP(result.capPIE)}</td>
                                                 <td className="col-int">{formatCLP(0)}</td>
                                                 <td className="col-hon">{formatCLP(result.honPIE)}</td>
