@@ -709,6 +709,14 @@ input {
   margin: 0;
 }
 
+/* ── BTNS COPIAR (Word + imagen) ── */
+.btns-copy-row {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 /* ── BTN COPIAR TABLA ── */
 .btn-copy-tabla {
   background: var(--surface2);

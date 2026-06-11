@@ -65,6 +65,7 @@ export default function AcuerdoCalc() {
     const [fechas, setFechas] = useState([])
     const [error, setError] = useState('')
     const [copiedTabla, setCopiedTabla] = useState(false)
+    const [copiedImg, setCopiedImg] = useState(false)
     const [ajuste, setAjuste] = useState(0)
     const [loading, setLoading] = useState(false)
     const [uf, setUf] = useState(() => cargarUF())
@@ -132,7 +133,8 @@ export default function AcuerdoCalc() {
     function handleCopiarTabla() {
         if (!result) return
 
-        const conGastos = modalidad === 'judicial' && result.gastosJudPorCuota > 0
+        const conGastos = modalidad === 'judicial'
+        const conPIE = result.abonoInicial > 0
 
         const headers = conGastos
             ? ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'HONORARIOS (10%)', 'GASTOS JUDICIALES', 'MONTO TOTAL CUOTA']
@@ -143,6 +145,16 @@ export default function AcuerdoCalc() {
         const tdBold = tdStyle + 'font-weight:bold;'
 
         const headerRow = `<tr>${headers.map(h => `<th style="${thStyle}">${h}</th>`).join('')}</tr>`
+
+        const pieRow = conPIE ? `<tr>
+            <td style="${tdBold}">PIE</td>
+            <td style="${tdStyle}"></td>
+            <td style="${tdStyle}">${Math.round(result.capPIE).toLocaleString('es-CL')}</td>
+            <td style="${tdStyle}">0</td>
+            <td style="${tdStyle}">${Math.round(result.honPIE).toLocaleString('es-CL')}</td>
+            ${conGastos ? `<td style="${tdStyle}">0</td>` : ''}
+            <td style="${tdBold}">${Math.round(result.abonoInicial).toLocaleString('es-CL')}</td>
+        </tr>` : ''
 
         const bodyRows = result.filas.map((f, i) => {
             const bg = i % 2 === 0 ? '#ffffff' : '#f2f2f2'
@@ -160,22 +172,24 @@ export default function AcuerdoCalc() {
         }).join('')
 
         const totalsRow = `<tr>
-            <td colspan="2" style="${tdBold}border-top:2px solid #000;">TOTALES</td>
-            <td style="${tdBold}border-top:2px solid #000;">${Math.round(result.totalCapital).toLocaleString('es-CL')}</td>
-            <td style="${tdBold}border-top:2px solid #000;">${(interesAjustado * result.cuotas).toLocaleString('es-CL')}</td>
-            <td style="${tdBold}border-top:2px solid #000;">${Math.round(result.honTotal).toLocaleString('es-CL')}</td>
-            ${conGastos ? `<td style="${tdBold}border-top:2px solid #000;">${result.gastosJudTotal.toLocaleString('es-CL')}</td>` : ''}
-            <td style="${tdBold}border-top:2px solid #000;">${(totalAjustado * result.cuotas).toLocaleString('es-CL')}</td>
+            <td colspan="${headers.length - 1}" style="${tdBold}border-top:2px solid #000;text-align:right;">TOTAL</td>
+            <td style="${tdBold}border-top:2px solid #000;">${granTotal.toLocaleString('es-CL')}</td>
         </tr>`
 
         const html = `<table style="border-collapse:collapse;width:100%;">
             <thead>${headerRow}</thead>
-            <tbody>${bodyRows}${totalsRow}</tbody>
+            <tbody>${pieRow}${bodyRows}${totalsRow}</tbody>
         </table>`
+
+        const pieLine = conPIE ? [
+            'PIE', '', Math.round(result.capPIE), 0, Math.round(result.honPIE),
+            ...(conGastos ? [0] : []),
+            Math.round(result.abonoInicial),
+        ].join('\t') + '\n' : ''
 
         const htmlBlob = new Blob([html], { type: 'text/html' })
         const textBlob = new Blob(
-            [headers.join('\t') + '\n' +
+            [headers.join('\t') + '\n' + pieLine +
                 result.filas.map((f, i) => [
                     f.nro,
                     fechas[i] ? formatFecha(fechas[i]) : '',
@@ -184,7 +198,8 @@ export default function AcuerdoCalc() {
                     Math.round(f.honorarios),
                     ...(conGastos ? [Math.round(f.gastosJud)] : []),
                     totalAjustado,
-                ].join('\t')).join('\n')],
+                ].join('\t')).join('\n') +
+                '\nTOTAL\t' + granTotal],
             { type: 'text/plain' }
         )
 
@@ -196,8 +211,134 @@ export default function AcuerdoCalc() {
         setTimeout(() => setCopiedTabla(false), 2500)
     }
 
+    async function handleCopiarImagen() {
+        if (!result) return
+
+        const conPIE = result.abonoInicial > 0
+        const filasImg = []
+        if (conPIE) filasImg.push({ label: 'PIE (abono inicial)', fecha: 'Al contado', total: Math.round(result.abonoInicial) })
+        result.filas.forEach((f, i) => filasImg.push({
+            label: `Cuota ${f.nro}`,
+            fecha: fechas[i] ? formatFecha(fechas[i]) : '—',
+            total: totalAjustado,
+        }))
+
+        const W = 640
+        const M = 32
+        const headerH = 96
+        const infoLineH = 26
+        const infoLines = conPIE ? 4 : 3
+        const infoTop = headerH + 30
+        const tableTop = infoTop + infoLines * infoLineH + 22
+        const rowH = 32
+        const totalRowH = 46
+        const footerH = 70
+        const H = tableTop + 30 + filasImg.length * rowH + totalRowH + footerH
+
+        const canvas = document.createElement('canvas')
+        const scale = 2
+        canvas.width = W * scale
+        canvas.height = H * scale
+        const ctx = canvas.getContext('2d')
+        ctx.scale(scale, scale)
+
+        // Fondo
+        ctx.fillStyle = '#f8fafc'
+        ctx.fillRect(0, 0, W, H)
+
+        // Encabezado oscuro con logo
+        ctx.fillStyle = '#1e293b'
+        ctx.fillRect(0, 0, W, headerH)
+        ctx.font = '32px "Segoe UI Emoji", sans-serif'
+        ctx.fillText('⚖️', M, 54)
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 19px Arial'
+        ctx.fillText('ESTUDIO JURÍDICO HADAD & ASOCIADOS', M + 48, 42)
+        ctx.fillStyle = '#94a3b8'
+        ctx.font = '13px Arial'
+        ctx.fillText(modalidad === 'judicial' ? 'Resumen de avenimiento' : 'Resumen de acuerdo de pago', M + 48, 63)
+        ctx.fillStyle = '#fbbf24'
+        ctx.font = 'bold 11px Arial'
+        ctx.fillText('DOCUMENTO DE REFERENCIA — NO OFICIAL', M + 48, 82)
+
+        // Datos principales
+        let y = infoTop
+        const info = []
+        if (conPIE) info.push(['Abono inicial (PIE):', formatCLP(result.abonoInicial)])
+        info.push(['N° de cuotas:', String(result.cuotas)])
+        info.push(['Primera cuota:', fechas[0] ? formatFecha(fechas[0]) : '—'])
+        info.push(['Valor cuota mensual:', formatCLP(totalAjustado)])
+        info.forEach(([k, v]) => {
+            ctx.fillStyle = '#64748b'
+            ctx.font = '14px Arial'
+            ctx.fillText(k, M, y)
+            ctx.fillStyle = '#0f172a'
+            ctx.font = 'bold 14px Arial'
+            ctx.fillText(v, M + 180, y)
+            y += infoLineH
+        })
+
+        // Cabecera de tabla
+        y = tableTop
+        ctx.fillStyle = '#e2e8f0'
+        ctx.fillRect(M, y, W - 2 * M, 30)
+        ctx.fillStyle = '#475569'
+        ctx.font = 'bold 12px Arial'
+        ctx.fillText('CUOTA', M + 12, y + 20)
+        ctx.fillText('VENCIMIENTO', M + 230, y + 20)
+        ctx.textAlign = 'right'
+        ctx.fillText('MONTO', W - M - 12, y + 20)
+        ctx.textAlign = 'left'
+        y += 30
+
+        // Filas (solo monto total, sin desglose)
+        filasImg.forEach((f, i) => {
+            if (i % 2 === 1) {
+                ctx.fillStyle = '#eef2f7'
+                ctx.fillRect(M, y, W - 2 * M, rowH)
+            }
+            ctx.fillStyle = '#0f172a'
+            ctx.font = '13px Arial'
+            ctx.fillText(f.label, M + 12, y + 21)
+            ctx.fillStyle = '#475569'
+            ctx.fillText(f.fecha, M + 230, y + 21)
+            ctx.fillStyle = '#0f172a'
+            ctx.textAlign = 'right'
+            ctx.font = 'bold 13px Arial'
+            ctx.fillText(formatCLP(f.total), W - M - 12, y + 21)
+            ctx.textAlign = 'left'
+            y += rowH
+        })
+
+        // Fila TOTAL
+        ctx.fillStyle = '#1e293b'
+        ctx.fillRect(M, y + 6, W - 2 * M, totalRowH - 12)
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 14px Arial'
+        ctx.fillText('TOTAL', M + 12, y + 28)
+        ctx.textAlign = 'right'
+        ctx.fillText(formatCLP(granTotal), W - M - 12, y + 28)
+        ctx.textAlign = 'left'
+        y += totalRowH
+
+        // Pie de página
+        ctx.fillStyle = '#94a3b8'
+        ctx.font = 'italic 11px Arial'
+        ctx.fillText('Este resumen es solo informativo y no constituye un documento oficial.', M, y + 22)
+        ctx.fillText('Los valores definitivos constan en el documento firmado entre las partes.', M, y + 38)
+
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+
+        setCopiedImg(true)
+        setTimeout(() => setCopiedImg(false), 2500)
+    }
+
     const totalAjustado = result ? Math.round(result.totalCuota + ajuste) : 0
     const interesAjustado = result ? Math.round(result.interesMes + ajuste) : 0
+    const granTotal = result
+        ? totalAjustado * result.cuotas + (result.abonoInicial > 0 ? Math.round(result.abonoInicial) : 0)
+        : 0
 
     const textoFechas = (() => {
         if (!result || fechas.length === 0 || !fechas[0]) return null
@@ -214,13 +355,18 @@ export default function AcuerdoCalc() {
             return `${date.getDate()} de ${MESES_MIN[date.getMonth()]} de ${date.getFullYear()}`
         }
 
+        const textoPIE = result.abonoInicial > 0
+            ? `Se efectúa un abono inicial (PIE) de ${formatCLP(result.abonoInicial)}. `
+            : ''
+        const sujeto = result.abonoInicial > 0 ? 'El saldo restante' : 'La deuda'
+
         if (n === 1) {
-            return `La deuda se pagará en 1 cuota de ${monto}. La cuota tendrá vencimiento el ${fechaTexto(f0)}.`
+            return `${textoPIE}${sujeto} se pagará en 1 cuota de ${monto}. La cuota tendrá vencimiento el ${fechaTexto(f0)}.`
         }
 
         const diaVencimiento = fields.diaSiguientes || f0.getDate()
 
-        return `La deuda se pagará en ${n} cuotas iguales, mensuales y sucesivas de ${monto} cada una. La primera cuota tendrá vencimiento el ${fechaTexto(f0)}, y las cuotas restantes vencerán los días ${diaVencimiento} de cada mes, finalizando el ${fechaTexto(fLast)}, ambas fechas inclusive.`
+        return `${textoPIE}${sujeto} se pagará en ${n} cuotas iguales, mensuales y sucesivas de ${monto} cada una. La primera cuota tendrá vencimiento el ${fechaTexto(f0)}, y las cuotas restantes vencerán los días ${diaVencimiento} de cada mes, finalizando el ${fechaTexto(fLast)}, ambas fechas inclusive.`
     })()
 
     function handleRedondear(direccion) {
@@ -524,16 +670,25 @@ export default function AcuerdoCalc() {
                     {/* Tabla de cuotas */}
                     <div className="section-header-row">
                         <h4 className="section-label">Detalle cuotas</h4>
-                        <button
-                            className={`btn-copy-tabla ${copiedTabla ? 'copied' : ''}`}
-                            onClick={handleCopiarTabla}
-                        >
-                            {copiedTabla ? '✓ Copiado para Word' : '📋 Copiar tabla para Word'}
-                        </button>
+                        <div className="btns-copy-row">
+                            <button
+                                className={`btn-copy-tabla ${copiedTabla ? 'copied' : ''}`}
+                                onClick={handleCopiarTabla}
+                            >
+                                {copiedTabla ? '✓ Copiado para Word' : '📋 Copiar tabla para Word'}
+                            </button>
+                            <button
+                                className={`btn-copy-tabla ${copiedImg ? 'copied' : ''}`}
+                                onClick={handleCopiarImagen}
+                            >
+                                {copiedImg ? '✓ Imagen copiada' : '🖼️ Copiar imagen para deudor'}
+                            </button>
+                        </div>
                     </div>
 
                     {(() => {
-                        const conGastos = modalidad === 'judicial' && result.gastosJudPorCuota > 0
+                        const conGastos = modalidad === 'judicial'
+                        const conPIE = result.abonoInicial > 0
                         return (
                             <div className="table-wrap">
                                 <table className="tranche-table cuota-table">
@@ -550,6 +705,18 @@ export default function AcuerdoCalc() {
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {conPIE && (
+                                            <tr>
+                                                <td className="col-nro">PIE</td>
+                                                <td className="col-fecha"><span className="no-fecha">—</span></td>
+                                                <td>{formatCLP(result.capPIE)}</td>
+                                                <td className="col-int">{formatCLP(0)}</td>
+                                                <td className="col-hon">{formatCLP(result.honPIE)}</td>
+                                                {conGastos && <td className="col-hon">{formatCLP(0)}</td>}
+                                                <td className="col-total">{formatCLP(result.abonoInicial)}</td>
+                                                <td><CopyBtn value={Math.round(result.abonoInicial)} /></td>
+                                            </tr>
+                                        )}
                                         {result.filas.map((f, i) => (
                                             <tr key={f.nro}>
                                                 <td className="col-nro">{f.nro}</td>
@@ -571,17 +738,11 @@ export default function AcuerdoCalc() {
                                     </tbody>
                                     <tfoot>
                                         <tr className="tfoot-row">
-                                            <td colSpan="2">TOTALES</td>
-                                            <td>{formatCLP(result.totalCapital)}</td>
-                                            <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                                {formatCLP(interesAjustado * result.cuotas)}
-                                            </td>
-                                            <td className="col-hon">{formatCLP(result.honTotal)}</td>
-                                            {conGastos && <td className="col-hon">{formatCLP(result.gastosJudTotal)}</td>}
+                                            <td colSpan={conGastos ? 6 : 5} style={{ textAlign: 'right' }}>TOTAL</td>
                                             <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                                {formatCLP(totalAjustado * result.cuotas)}
+                                                {formatCLP(granTotal)}
                                             </td>
-                                            <td><CopyBtn value={totalAjustado * result.cuotas} /></td>
+                                            <td><CopyBtn value={granTotal} /></td>
                                         </tr>
                                     </tfoot>
                                 </table>
