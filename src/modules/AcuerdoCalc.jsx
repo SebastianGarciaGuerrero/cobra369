@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { calcularAcuerdo, formatCLP, parseCLPInput } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
+import logoHadad from '../assets/logo-hadad.png'
 
 const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
     'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']
@@ -234,12 +235,18 @@ export default function AcuerdoCalc() {
             total: totalAjustado,
         }))
 
+        // Cargar logo
+        const logo = new Image()
+        logo.src = logoHadad
+        await new Promise(res => { logo.onload = res; logo.onerror = res })
+        const logoOk = logo.complete && logo.naturalWidth > 0
+
         const W = 640
         const M = 32
-        const headerH = 96
+        const headerH = 148
         const infoLineH = 26
         const infoLines = conPIE ? 4 : 3
-        const infoTop = headerH + 30
+        const infoTop = headerH + 34
         const tableTop = infoTop + infoLines * infoLineH + 22
         const rowH = 32
         const totalRowH = 46
@@ -253,24 +260,32 @@ export default function AcuerdoCalc() {
         const ctx = canvas.getContext('2d')
         ctx.scale(scale, scale)
 
-        // Fondo
-        ctx.fillStyle = '#f8fafc'
+        // Fondo blanco tenue
+        ctx.fillStyle = '#f4f4f4'
         ctx.fillRect(0, 0, W, H)
 
-        // Encabezado oscuro con logo
-        ctx.fillStyle = '#1e293b'
-        ctx.fillRect(0, 0, W, headerH)
-        ctx.font = '32px "Segoe UI Emoji", sans-serif'
-        ctx.fillText('⚖️', M, 54)
+        // Encabezado blanco con logo
         ctx.fillStyle = '#ffffff'
-        ctx.font = 'bold 19px Arial'
-        ctx.fillText('ESTUDIO JURÍDICO HADAD & ASOCIADOS', M + 48, 42)
-        ctx.fillStyle = '#94a3b8'
-        ctx.font = '13px Arial'
-        ctx.fillText(modalidad === 'judicial' ? 'Resumen de avenimiento' : 'Resumen de acuerdo de pago', M + 48, 63)
-        ctx.fillStyle = '#fbbf24'
+        ctx.fillRect(0, 0, W, headerH)
+
+        const logoH = 112
+        let logoW = 0
+        if (logoOk) {
+            logoW = logoH * (logo.naturalWidth / logo.naturalHeight)
+            ctx.drawImage(logo, M, (headerH - logoH) / 2 - 4, logoW, logoH)
+        }
+
+        const tx = M + (logoOk ? logoW + 28 : 0)
+        ctx.fillStyle = '#111111'
+        ctx.font = 'bold 20px Arial'
+        ctx.fillText(modalidad === 'judicial' ? 'RESUMEN DE AVENIMIENTO' : 'RESUMEN DE ACUERDO DE PAGO', tx, 62)
+        ctx.fillStyle = '#777777'
         ctx.font = 'bold 11px Arial'
-        ctx.fillText('DOCUMENTO DE REFERENCIA — NO OFICIAL', M + 48, 82)
+        ctx.fillText('DOCUMENTO DE REFERENCIA — NO OFICIAL', tx, 84)
+
+        // Línea divisoria negra
+        ctx.fillStyle = '#111111'
+        ctx.fillRect(0, headerH - 3, W, 3)
 
         // Datos principales
         let y = infoTop
@@ -280,10 +295,10 @@ export default function AcuerdoCalc() {
         info.push(['Primera cuota:', fechas[0] ? formatFecha(fechas[0]) : '—'])
         info.push(['Valor cuota mensual:', formatCLP(totalAjustado)])
         info.forEach(([k, v]) => {
-            ctx.fillStyle = '#64748b'
+            ctx.fillStyle = '#6e6e6e'
             ctx.font = '14px Arial'
             ctx.fillText(k, M, y)
-            ctx.fillStyle = '#0f172a'
+            ctx.fillStyle = '#111111'
             ctx.font = 'bold 14px Arial'
             ctx.fillText(v, M + 180, y)
             y += infoLineH
@@ -291,9 +306,9 @@ export default function AcuerdoCalc() {
 
         // Cabecera de tabla
         y = tableTop
-        ctx.fillStyle = '#e2e8f0'
+        ctx.fillStyle = '#1a1a1a'
         ctx.fillRect(M, y, W - 2 * M, 30)
-        ctx.fillStyle = '#475569'
+        ctx.fillStyle = '#f4f4f4'
         ctx.font = 'bold 12px Arial'
         ctx.fillText('CUOTA', M + 12, y + 20)
         ctx.fillText('VENCIMIENTO', M + 230, y + 20)
@@ -304,16 +319,14 @@ export default function AcuerdoCalc() {
 
         // Filas (solo monto total, sin desglose)
         filasImg.forEach((f, i) => {
-            if (i % 2 === 1) {
-                ctx.fillStyle = '#eef2f7'
-                ctx.fillRect(M, y, W - 2 * M, rowH)
-            }
-            ctx.fillStyle = '#0f172a'
+            ctx.fillStyle = i % 2 === 1 ? '#e8e8e8' : '#ffffff'
+            ctx.fillRect(M, y, W - 2 * M, rowH)
+            ctx.fillStyle = '#1a1a1a'
             ctx.font = '13px Arial'
             ctx.fillText(f.label, M + 12, y + 21)
-            ctx.fillStyle = '#475569'
+            ctx.fillStyle = '#6e6e6e'
             ctx.fillText(f.fecha, M + 230, y + 21)
-            ctx.fillStyle = '#0f172a'
+            ctx.fillStyle = '#1a1a1a'
             ctx.textAlign = 'right'
             ctx.font = 'bold 13px Arial'
             ctx.fillText(formatCLP(f.total), W - M - 12, y + 21)
@@ -322,7 +335,7 @@ export default function AcuerdoCalc() {
         })
 
         // Fila TOTAL
-        ctx.fillStyle = '#1e293b'
+        ctx.fillStyle = '#000000'
         ctx.fillRect(M, y + 6, W - 2 * M, totalRowH - 12)
         ctx.fillStyle = '#ffffff'
         ctx.font = 'bold 14px Arial'
@@ -333,7 +346,7 @@ export default function AcuerdoCalc() {
         y += totalRowH
 
         // Pie de página
-        ctx.fillStyle = '#94a3b8'
+        ctx.fillStyle = '#8a8a8a'
         ctx.font = 'italic 11px Arial'
         ctx.fillText('Este resumen es solo informativo y no constituye un documento oficial.', M, y + 22)
 
