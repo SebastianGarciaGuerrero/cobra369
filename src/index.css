@@ -952,6 +952,42 @@ input {
   margin-bottom: 0;
 }
 
+/* ── LABEL CON PILL (ej. 30% pie) ── */
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .4rem;
+}
+
+.label-row label {
+  margin-bottom: 0;
+}
+
+.pill-pie {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: .08rem .55rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  line-height: 1.5;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.pill-pie:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.pill-pie.active {
+  background: rgba(99, 102, 241, .18);
+  border-color: var(--primary);
+  color: #a5b4fc;
+}
+
 /* ── MODE TABS (Extrajudicial / Judicial) ── */
 .mode-tabs {
   display: flex;

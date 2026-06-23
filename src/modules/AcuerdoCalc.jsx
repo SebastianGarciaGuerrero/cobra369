@@ -73,6 +73,23 @@ export default function AcuerdoCalc() {
     const [uf, setUf] = useState(() => cargarUF())
     const [modalidad, setModalidad] = useState('extrajudicial')
     const [calcId, setCalcId] = useState(0)
+    const [pie30, setPie30] = useState(false)
+
+    // Devuelve el 30% del capital formateado en CLP (o '' si capital inválido)
+    function calcPie30(capitalStr) {
+        const cap = parseCLPInput(capitalStr)
+        if (isNaN(cap) || cap <= 0) return ''
+        return Math.round(cap * 0.30).toLocaleString('es-CL')
+    }
+
+    function togglePie30() {
+        if (pie30) {
+            setPie30(false)
+        } else {
+            setPie30(true)
+            set('abonoInicial', calcPie30(fields.capital))
+        }
+    }
 
     function switchModalidad(nueva) {
         setModalidad(nueva)
@@ -446,7 +463,11 @@ export default function AcuerdoCalc() {
                             onChange={e => {
                                 const raw = e.target.value.replace(/\D/g, '')
                                 const formatted = raw === '' ? '' : Number(raw).toLocaleString('es-CL')
-                                set('capital', formatted)
+                                setFields(p => ({
+                                    ...p,
+                                    capital: formatted,
+                                    abonoInicial: pie30 ? calcPie30(formatted) : p.abonoInicial,
+                                }))
                             }}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
@@ -482,7 +503,17 @@ export default function AcuerdoCalc() {
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
                     </div>
                     <div className="form-group">
-                        <label>Abono inicial (opcional)</label>
+                        <div className="label-row">
+                            <label>Abono inicial (opcional)</label>
+                            <button
+                                type="button"
+                                className={`pill-pie ${pie30 ? 'active' : ''}`}
+                                onClick={togglePie30}
+                                title="Calcular el 30% del saldo capital como pie"
+                            >
+                                30%
+                            </button>
+                        </div>
                         <input
                             type="text"
                             inputMode="numeric"
@@ -491,6 +522,7 @@ export default function AcuerdoCalc() {
                             onChange={e => {
                                 const raw = e.target.value.replace(/\D/g, '')
                                 const formatted = raw === '' ? '' : Number(raw).toLocaleString('es-CL')
+                                setPie30(false)
                                 set('abonoInicial', formatted)
                             }}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
