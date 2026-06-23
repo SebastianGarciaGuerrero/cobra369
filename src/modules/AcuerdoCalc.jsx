@@ -451,8 +451,8 @@ export default function AcuerdoCalc() {
                     </button>
                 </div>
 
-                {/* Fila 1: capital + UF */}
-                <div className={`form-row ${modalidad === 'judicial' ? 'single' : ''}`}>
+                {/* Formulario en grilla de 2 columnas alineadas */}
+                <div className="form-grid">
                     <div className="form-group">
                         <label>Saldo capital ($ CLP)</label>
                         <input
@@ -472,7 +472,8 @@ export default function AcuerdoCalc() {
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
                     </div>
-                    {modalidad === 'extrajudicial' && (
+
+                    {modalidad === 'extrajudicial' ? (
                         <div className="form-group">
                             <label>Valor UF del día</label>
                             <input
@@ -485,23 +486,37 @@ export default function AcuerdoCalc() {
                                 onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                             />
                         </div>
+                    ) : (
+                        <div className="form-group">
+                            <label>Gastos judiciales — total ($ CLP)</label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Ej: 350.000"
+                                value={fields.gastosJudiciales}
+                                onChange={e => {
+                                    const raw = e.target.value.replace(/\D/g, '')
+                                    set('gastosJudiciales', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                }}
+                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                            />
+                        </div>
                     )}
-                </div>
 
-                {/* Fila 2: cuotas + tasa + abono */}
-                <div className="form-row three-cols-form">
                     <div className="form-group">
                         <label>N° de cuotas</label>
                         <input type="text" inputMode="numeric" placeholder="Ej: 8"
                             value={fields.cuotas} onChange={e => set('cuotas', e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
                     </div>
+
                     <div className="form-group">
                         <label>Tasa interés mensual (%)</label>
                         <input type="text" inputMode="decimal" placeholder="Ej: 0,70"
                             value={fields.tasaMensual} onChange={e => set('tasaMensual', e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
                     </div>
+
                     <div className="form-group">
                         <div className="label-row">
                             <label>Abono inicial (opcional)</label>
@@ -528,30 +543,32 @@ export default function AcuerdoCalc() {
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
                     </div>
-                </div>
 
-                {/* Gastos judiciales (solo modo judicial) */}
-                {modalidad === 'judicial' && (
-                    <div className="form-row single">
-                        <div className="form-group">
-                            <label>Gastos judiciales — total ($ CLP)</label>
+                    <div className="form-group">
+                        <label>Fecha abono (opcional)</label>
+                        <div className="input-date-wrap">
                             <input
                                 type="text"
-                                inputMode="numeric"
-                                placeholder="Ej: 350.000"
-                                value={fields.gastosJudiciales}
-                                onChange={e => {
-                                    const raw = e.target.value.replace(/\D/g, '')
-                                    set('gastosJudiciales', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
-                                }}
+                                placeholder="DD-MM-YYYY"
+                                value={fields.fechaAbono}
+                                onChange={e => set('fechaAbono', e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                             />
+                            <input
+                                type="date"
+                                className="date-picker-hidden"
+                                onClick={e => { try { e.target.showPicker() } catch { /* navegador sin soporte */ } }}
+                                onChange={e => {
+                                    if (!e.target.value) return
+                                    const [y, m, d] = e.target.value.split('-')
+                                    set('fechaAbono', `${d}-${m}-${y}`)
+                                }}
+                                title="Elegir desde calendario"
+                            />
+                            <span className="date-icon">📅</span>
                         </div>
                     </div>
-                )}
 
-                {/* Fila 3: fechas */}
-                <div className="form-row three-cols-form">
                     <div className="form-group">
                         <label>Fecha 1ª cuota</label>
                         <div className="input-date-wrap">
@@ -577,35 +594,12 @@ export default function AcuerdoCalc() {
                             <span className="date-icon">📅</span>
                         </div>
                     </div>
+
                     <div className="form-group">
                         <label>Día cuotas siguientes</label>
                         <input type="text" inputMode="numeric" placeholder="Ej: 25"
                             value={fields.diaSiguientes} onChange={e => set('diaSiguientes', e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
-                    </div>
-                    <div className="form-group">
-                        <label>Fecha abono (opcional)</label>
-                        <div className="input-date-wrap">
-                            <input
-                                type="text"
-                                placeholder="DD-MM-YYYY"
-                                value={fields.fechaAbono}
-                                onChange={e => set('fechaAbono', e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
-                            />
-                            <input
-                                type="date"
-                                className="date-picker-hidden"
-                                onClick={e => { try { e.target.showPicker() } catch { /* navegador sin soporte */ } }}
-                                onChange={e => {
-                                    if (!e.target.value) return
-                                    const [y, m, d] = e.target.value.split('-')
-                                    set('fechaAbono', `${d}-${m}-${y}`)
-                                }}
-                                title="Elegir desde calendario"
-                            />
-                            <span className="date-icon">📅</span>
-                        </div>
                     </div>
                 </div>
 
