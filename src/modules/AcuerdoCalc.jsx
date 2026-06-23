@@ -518,6 +518,39 @@ export default function AcuerdoCalc() {
                     </div>
 
                     <div className="form-group">
+                        <label>Fecha 1ª cuota</label>
+                        <div className="input-date-wrap">
+                            <input
+                                type="text"
+                                placeholder="DD-MM-YYYY"
+                                value={fields.fechaPrimera}
+                                onChange={e => set('fechaPrimera', e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
+                            />
+                            <input
+                                type="date"
+                                className="date-picker-hidden"
+                                min={new Date().toISOString().split('T')[0]}
+                                onClick={e => { try { e.target.showPicker() } catch { /* navegador sin soporte */ } }}
+                                onChange={e => {
+                                    if (!e.target.value) return
+                                    const [y, m, d] = e.target.value.split('-')
+                                    set('fechaPrimera', `${d}-${m}-${y}`)
+                                }}
+                                title="Elegir desde calendario"
+                            />
+                            <span className="date-icon">📅</span>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Día cuotas siguientes</label>
+                        <input type="text" inputMode="numeric" placeholder="Ej: 25"
+                            value={fields.diaSiguientes} onChange={e => set('diaSiguientes', e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
+                    </div>
+
+                    <div className="form-group">
                         <div className="label-row">
                             <label>Abono inicial (opcional)</label>
                             <button
@@ -567,39 +600,6 @@ export default function AcuerdoCalc() {
                             />
                             <span className="date-icon">📅</span>
                         </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Fecha 1ª cuota</label>
-                        <div className="input-date-wrap">
-                            <input
-                                type="text"
-                                placeholder="DD-MM-YYYY"
-                                value={fields.fechaPrimera}
-                                onChange={e => set('fechaPrimera', e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleCalcular()}
-                            />
-                            <input
-                                type="date"
-                                className="date-picker-hidden"
-                                min={new Date().toISOString().split('T')[0]}
-                                onClick={e => { try { e.target.showPicker() } catch { /* navegador sin soporte */ } }}
-                                onChange={e => {
-                                    if (!e.target.value) return
-                                    const [y, m, d] = e.target.value.split('-')
-                                    set('fechaPrimera', `${d}-${m}-${y}`)
-                                }}
-                                title="Elegir desde calendario"
-                            />
-                            <span className="date-icon">📅</span>
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label>Día cuotas siguientes</label>
-                        <input type="text" inputMode="numeric" placeholder="Ej: 25"
-                            value={fields.diaSiguientes} onChange={e => set('diaSiguientes', e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCalcular()} />
                     </div>
                 </div>
 
