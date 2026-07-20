@@ -191,7 +191,7 @@ export default function AcuerdoCalc() {
             <td style="${td}">${f.nro}</td>
             <td style="${td}">${fechas[i] ? formatFecha(fechas[i]) : ''}</td>
             <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
-            <td style="${td}">${interesAjustado.toLocaleString('es-CL')}</td>
+            <td style="${td}">${interesFila(f).toLocaleString('es-CL')}</td>
             <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
             ${conGastos ? `<td style="${td}">${Math.round(f.gastosJud).toLocaleString('es-CL')}</td>` : ''}
             <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
@@ -221,7 +221,7 @@ export default function AcuerdoCalc() {
                     f.nro,
                     fechas[i] ? formatFecha(fechas[i]) : '',
                     Math.round(f.capital),
-                    interesAjustado,
+                    interesFila(f),
                     Math.round(f.honorarios),
                     ...(conGastos ? [Math.round(f.gastosJud)] : []),
                     totalAjustado,
@@ -378,6 +378,8 @@ export default function AcuerdoCalc() {
 
     const totalAjustado = result ? Math.round(result.totalCuota + ajuste) : 0
     const interesAjustado = result ? Math.round(result.interesMes + ajuste) : 0
+    // Interés de cada fila (la última difiere para cuadrar el capital)
+    const interesFila = (f) => Math.round(f.interes + ajuste)
     const granTotal = result
         ? totalAjustado * result.cuotas + (result.abonoInicial > 0 ? Math.round(result.abonoInicial) : 0)
         : 0
@@ -810,7 +812,7 @@ export default function AcuerdoCalc() {
                                                 </td>
                                                 <td>{formatCLP(f.capital)}</td>
                                                 <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
-                                                    {formatCLP(interesAjustado)}
+                                                    {formatCLP(interesFila(f))}
                                                 </td>
                                                 <td className="col-hon">{formatCLP(f.honorarios)}</td>
                                                 {conGastos && <td className="col-hon">{formatCLP(f.gastosJud)}</td>}

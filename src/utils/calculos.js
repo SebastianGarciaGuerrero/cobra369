@@ -193,24 +193,35 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
     // Total es la SUMA de partes redondeadas → siempre cuadra
     const totalCuota = cuotaCap + interesMes + honMes + gastosJudPorCuota
 
+    // La última cuota ABSORBE el resto del capital para que la suma dé
+    // EXACTO (la clínica recibe el capital completo, sin perder pesos).
+    // Esa diferencia se compensa en el interés de la última cuota, así su
+    // total sigue siendo idéntico al del resto.
+    const capUltima = capNuevo - cuotaCap * (cuotas - 1)
+    const diffCap = capUltima - cuotaCap            // puede ser + o −
+    const interesUltima = interesMes - diffCap      // mantiene igual el total
+
     const honTotal = honMes * cuotas
-    const interesTotal = interesMes * cuotas
+    const interesTotal = interesMes * (cuotas - 1) + interesUltima
     const totalPagare = totalCuota * cuotas
 
-    const filas = Array.from({ length: cuotas }, (_, i) => ({
-        nro: i + 1,
-        capital: cuotaCap,
-        interes: interesMes,
-        honorarios: honMes,
-        gastosJud: gastosJudPorCuota,
-        total: totalCuota,
-    }))
+    const filas = Array.from({ length: cuotas }, (_, i) => {
+        const esUltima = i === cuotas - 1
+        return {
+            nro: i + 1,
+            capital: esUltima ? capUltima : cuotaCap,
+            interes: esUltima ? interesUltima : interesMes,
+            honorarios: honMes,
+            gastosJud: gastosJudPorCuota,
+            total: totalCuota,
+        }
+    })
 
     return {
         capital, capNuevo, cuotas, tasaMensual, uf,
         abonoInicial, capPIE, honPIE,
-        cuotaCap, cuotaUF,
-        interesMes, interesTotal,
+        cuotaCap, capUltima, diffCap, cuotaUF,
+        interesMes, interesUltima, interesTotal,
         honMes, honTotal,
         hon1, hon2, hon3,
         monto1, monto2, monto3,
