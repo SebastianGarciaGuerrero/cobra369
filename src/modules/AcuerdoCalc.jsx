@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { calcularAcuerdo, formatCLP, parseCLPInput, COMISION_FLOW_PCT } from '../utils/calculos'
+import { construirAcuerdoHTML, descargarWord, FILIALES, fechaLarga } from '../utils/generarWord'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import logoHadad from '../assets/logo-hadad.png'
@@ -75,6 +76,57 @@ export default function AcuerdoCalc() {
     const [calcId, setCalcId] = useState(0)
     const [pie30, setPie30] = useState(false)
     const [flow, setFlow] = useState(false)
+    const [panelDoc, setPanelDoc] = useState(false)
+    const [doc, setDoc] = useState({
+        numeroCob: '',
+        fechaDoc: fechaLarga(new Date()),
+        filial: 'SANTIAGO',
+        filialOtra: '',
+        tratamiento: 'don',
+        nombre: '',
+        id: '',
+        rut: '',
+        montoDerivado: '',
+        abonoClinico: '',
+        transferencia: FILIALES.SANTIAGO.transferencia,
+    })
+
+    function setDocField(id, val) { setDoc(p => ({ ...p, [id]: val })) }
+
+    function cambiarFilial(nueva) {
+        setDoc(p => ({
+            ...p,
+            filial: nueva,
+            transferencia: FILIALES[nueva] ? FILIALES[nueva].transferencia : p.transferencia,
+        }))
+    }
+
+    function handleGenerarWord() {
+        if (!result) return
+        const html = construirAcuerdoHTML({
+            result,
+            fechas,
+            doc: {
+                ...doc,
+                filialNombre: doc.filial === 'OTRA' ? (doc.filialOtra || '') : doc.filial,
+                montoDerivado: doc.montoDerivado.trim() === ''
+                    ? Math.round(result.capital)
+                    : parseCLPInput(doc.montoDerivado),
+                abonoClinico: doc.abonoClinico.trim() === '' ? 0 : parseCLPInput(doc.abonoClinico),
+            },
+            textoCuotas: textoFechas,
+            fechaAbono: fields.fechaAbono.trim(),
+            totalCuota: totalAjustado,
+            granTotal,
+            conGastos: modalidad === 'judicial',
+            conFlow: result.comisionFlow,
+            // El rótulo "(30%)" se deduce del monto real, no del botón,
+            // para que el documento nunca diga algo que no corresponda
+            pie30: Math.abs(result.abonoInicial - result.capital * 0.30) < 3,
+        })
+        const idArchivo = doc.id.trim() || doc.rut.trim() || 'sin-id'
+        descargarWord(html, `ACUERDO ${idArchivo}.doc`)
+    }
 
     // Recalcula con/sin comisión Flow reutilizando los datos ya calculados
     function toggleFlow() {
@@ -895,6 +947,101 @@ export default function AcuerdoCalc() {
                                 <CopyBtn value={totalAjustado} />
                             </div>
                         </div>
+                    </div>
+
+                    {/* ── Generar documento Word ── */}
+                    <div className="doc-section">
+                        <div className="section-header-row">
+                            <h4 className="section-label">Documento del acuerdo</h4>
+                            <button
+                                className="btn-copy-tabla"
+                                onClick={() => setPanelDoc(v => !v)}
+                            >
+                                {panelDoc ? '▲ Ocultar datos' : '▼ Datos del documento'}
+                            </button>
+                        </div>
+
+                        {panelDoc && (
+                            <div className="doc-grid">
+                                <div className="form-group">
+                                    <label>N° COB</label>
+                                    <input type="text" placeholder="Ej: 11947"
+                                        value={doc.numeroCob} onChange={e => setDocField('numeroCob', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Fecha documento</label>
+                                    <input type="text" placeholder="Ej: 01 julio 2026"
+                                        value={doc.fechaDoc} onChange={e => setDocField('fechaDoc', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Filial</label>
+                                    <select value={doc.filial} onChange={e => cambiarFilial(e.target.value)}>
+                                        {Object.entries(FILIALES).map(([k, v]) => (
+                                            <option key={k} value={k}>{v.label}</option>
+                                        ))}
+                                        <option value="OTRA">Otra…</option>
+                                    </select>
+                                </div>
+                                {doc.filial === 'OTRA' && (
+                                    <div className="form-group">
+                                        <label>Nombre de la filial</label>
+                                        <input type="text" placeholder="Ej: VALPARAÍSO"
+                                            value={doc.filialOtra} onChange={e => setDocField('filialOtra', e.target.value)} />
+                                    </div>
+                                )}
+                                <div className="form-group">
+                                    <label>Tratamiento</label>
+                                    <select value={doc.tratamiento} onChange={e => setDocField('tratamiento', e.target.value)}>
+                                        <option value="don">don</option>
+                                        <option value="doña">doña</option>
+                                    </select>
+                                </div>
+                                <div className="form-group doc-col-2">
+                                    <label>Nombre del deudor</label>
+                                    <input type="text" placeholder="Ej: Marco Antonio Córdova González"
+                                        value={doc.nombre} onChange={e => setDocField('nombre', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>ID cuenta</label>
+                                    <input type="text" placeholder="Ej: 359346-0"
+                                        value={doc.id} onChange={e => setDocField('id', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>RUT</label>
+                                    <input type="text" placeholder="Ej: 13.434.442-3"
+                                        value={doc.rut} onChange={e => setDocField('rut', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Monto derivado a cobranza</label>
+                                    <input type="text" inputMode="numeric"
+                                        placeholder={formatCLP(result.capital)}
+                                        value={doc.montoDerivado}
+                                        onChange={e => {
+                                            const raw = e.target.value.replace(/\D/g, '')
+                                            setDocField('montoDerivado', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                        }} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Abono a capital clínico (opcional)</label>
+                                    <input type="text" inputMode="numeric" placeholder="Ej: 183.486"
+                                        value={doc.abonoClinico}
+                                        onChange={e => {
+                                            const raw = e.target.value.replace(/\D/g, '')
+                                            setDocField('abonoClinico', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                        }} />
+                                </div>
+                                <div className="form-group doc-col-full">
+                                    <label>Forma de pago / datos de transferencia</label>
+                                    <textarea rows="7"
+                                        value={doc.transferencia}
+                                        onChange={e => setDocField('transferencia', e.target.value)} />
+                                </div>
+                            </div>
+                        )}
+
+                        <button className="btn-primary btn-word" onClick={handleGenerarWord}>
+                            📄 Generar acuerdo en Word
+                        </button>
                     </div>
 
                 </div>

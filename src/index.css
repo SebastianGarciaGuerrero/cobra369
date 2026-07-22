@@ -717,6 +717,65 @@ input {
   justify-content: flex-end;
 }
 
+/* ── SECCIÓN DOCUMENTO WORD ── */
+.doc-section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.doc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.doc-grid .form-group {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.doc-col-2 {
+  grid-column: span 2;
+}
+
+.doc-col-full {
+  grid-column: 1 / -1;
+}
+
+.doc-grid select,
+.doc-grid textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .65rem 1rem;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.doc-grid textarea {
+  font-size: .85rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.doc-grid select:focus,
+.doc-grid textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, .2);
+}
+
+.btn-word {
+  margin-top: 0;
+}
+
 /* ── BTN COMISIÓN FLOW (toggle) ── */
 .btn-flow {
   background: var(--surface2);
