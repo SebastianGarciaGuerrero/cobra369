@@ -117,12 +117,18 @@ export function construirAcuerdoHTML({
         'MONTO TOTAL CUOTA',
     ]
 
-    const celda = `border:1px solid #000;padding:1.5pt 4pt;text-align:center;font-size:9pt;font-family:${FUENTE};white-space:nowrap;mso-line-height-rule:exactly;line-height:11pt;`
-    const th = celda + 'font-weight:bold;background:#e9e9e9;font-size:8pt;'
+    // Propiedades mso-* : Word las respeta y permiten comprimir la tabla
+    // (altura de fila exacta, padding interno mínimo, sin interlineado extra)
+    const celda = `border:1px solid #000;padding:0.5pt 3pt;text-align:center;` +
+        `font-size:8.5pt;font-family:${FUENTE};white-space:nowrap;` +
+        `mso-line-height-rule:exactly;line-height:9.5pt;vertical-align:middle;`
+    const th = celda + 'font-weight:bold;background:#e9e9e9;font-size:7.5pt;'
     const td = celda
     const tdb = celda + 'font-weight:bold;'
+    // Fila con altura exacta: evita que Word la "engorde"
+    const filaAlt = ' style="height:10pt;mso-height-rule:exactly;"'
 
-    const filaPIE = conPIE ? `<tr>
+    const filaPIE = conPIE ? `<tr${filaAlt}>
         <td style="${tdb}">PIE${pie30 ? ' (30%)' : ''}</td>
         <td style="${td}">${esc(acortarFechaTexto(fechaAbono))}</td>
         <td style="${td}">${miles(result.capPIE)}</td>
@@ -133,7 +139,7 @@ export function construirAcuerdoHTML({
         <td style="${tdb}">${miles(result.abonoInicial)}</td>
     </tr>` : ''
 
-    const filasCuotas = result.filas.map((f, i) => `<tr>
+    const filasCuotas = result.filas.map((f, i) => `<tr${filaAlt}>
         <td style="${td}">${f.nro}</td>
         <td style="${td}">${fechaCorta(fechas[i])}</td>
         <td style="${td}">${miles(f.capital)}</td>
@@ -144,14 +150,15 @@ export function construirAcuerdoHTML({
         <td style="${tdb}">${miles(totalCuota)}</td>
     </tr>`).join('')
 
-    const filaTotal = `<tr>
+    const filaTotal = `<tr${filaAlt}>
         <td colspan="${headers.length - 1}" style="${tdb}text-align:center;">TOTAL</td>
         <td style="${tdb}">${miles(granTotal)}</td>
     </tr>`
 
-    const tabla = `<table style="border-collapse:collapse;width:100%;margin:14pt 0 16pt 0;">
-        <tr>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr>
-        ${filaPIE}${filasCuotas}${filaTotal}
+    const tabla = `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 16pt 0;` +
+        `mso-table-lspace:0pt;mso-table-rspace:0pt;mso-padding-alt:0pt 3pt 0pt 3pt;mso-table-layout-alt:fixed;">
+        <thead><tr${filaAlt}>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr></thead>
+        <tbody>${filaPIE}${filasCuotas}${filaTotal}</tbody>
     </table>`
 
     // ── Párrafos de apertura (dos variantes según los acuerdos reales) ──
@@ -209,6 +216,10 @@ export function construirAcuerdoHTML({
 
     <p style="${p}">${esc(textoCuotas || '')}</p>
     ${bloquePago}
+
+    <br clear="all" style="mso-special-character:line-break;page-break-before:always;" />
+
+    <p style="${centro}margin:0 0 16pt 0;">DETALLE DE CUOTAS</p>
 
     ${tabla}
 
