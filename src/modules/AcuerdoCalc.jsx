@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcularAcuerdo, formatCLP, parseCLPInput } from '../utils/calculos'
+import { calcularAcuerdo, formatCLP, parseCLPInput, COMISION_FLOW_PCT } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import logoHadad from '../assets/logo-hadad.png'
@@ -74,6 +74,25 @@ export default function AcuerdoCalc() {
     const [modalidad, setModalidad] = useState('extrajudicial')
     const [calcId, setCalcId] = useState(0)
     const [pie30, setPie30] = useState(false)
+    const [flow, setFlow] = useState(false)
+
+    // Recalcula con/sin comisión Flow reutilizando los datos ya calculados
+    function toggleFlow() {
+        const nuevo = !flow
+        setFlow(nuevo)
+        if (!result) return
+        setAjuste(0)
+        setResult(calcularAcuerdo({
+            capital: result.capital,
+            abonoInicial: result.abonoInicial,
+            cuotas: result.cuotas,
+            tasaMensual: result.tasaMensual,
+            uf: result.uf,
+            modalidad,
+            gastosJudiciales: result.gastosJudiciales,
+            comisionFlow: nuevo,
+        }))
+    }
 
     // Devuelve el 30% del capital formateado en CLP (o '' si capital inválido)
     function calcPie30(capitalStr) {
@@ -152,7 +171,7 @@ export default function AcuerdoCalc() {
         setLoading(true)
         setTimeout(() => setLoading(false), 800)
         setAjuste(0)
-        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad, gastosJudiciales }))
+        setResult(calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad, gastosJudiciales, comisionFlow: flow }))
         setFechas(generarFechas(fields.fechaPrimera, diaSig, cuotas))
         setCalcId(n => n + 1)
     }
@@ -161,11 +180,16 @@ export default function AcuerdoCalc() {
         if (!result) return
 
         const conGastos = modalidad === 'judicial'
+        const conFlow = result.comisionFlow
         const conPIE = result.abonoInicial > 0
 
-        const headers = conGastos
-            ? ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'HONORARIOS (10%)', 'GASTOS JUDICIALES', 'MONTO TOTAL CUOTA']
-            : ['N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS', 'GASTO COBRANZA', 'MONTO TOTAL CUOTA']
+        const headers = [
+            'N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS',
+            conGastos ? 'HONORARIOS (10%)' : 'GASTO COBRANZA',
+            ...(conGastos ? ['GASTOS JUDICIALES'] : []),
+            ...(conFlow ? ['COMISIÓN FLOW'] : []),
+            'MONTO TOTAL CUOTA',
+        ]
 
         const thStyle = `border:1px solid #000;background-color:#dce6f1;color:#000000;font-weight:bold;padding:5px 8px;text-align:center;font-size:10pt;font-family:Arial,sans-serif;`
         const tdStyle = `border:1px solid #000;padding:4px 8px;text-align:center;font-size:10pt;font-family:Arial,sans-serif;color:#000000;background-color:#ffffff;`
@@ -180,6 +204,7 @@ export default function AcuerdoCalc() {
             <td style="${tdStyle}">0</td>
             <td style="${tdStyle}">${Math.round(result.honPIE).toLocaleString('es-CL')}</td>
             ${conGastos ? `<td style="${tdStyle}">0</td>` : ''}
+            ${conFlow ? `<td style="${tdStyle}">0</td>` : ''}
             <td style="${tdBold}">${Math.round(result.abonoInicial).toLocaleString('es-CL')}</td>
         </tr>` : ''
 
@@ -194,12 +219,13 @@ export default function AcuerdoCalc() {
             <td style="${td}">${interesFila(f).toLocaleString('es-CL')}</td>
             <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
             ${conGastos ? `<td style="${td}">${Math.round(f.gastosJud).toLocaleString('es-CL')}</td>` : ''}
+            ${conFlow ? `<td style="${td}">${Math.round(f.flow).toLocaleString('es-CL')}</td>` : ''}
             <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
         </tr>`
         }).join('')
 
         const totalsRow = `<tr>
-            <td colspan="${headers.length - 1}" style="${tdBold}border-top:2px solid #000;text-align:right;">TOTAL</td>
+            <td colspan="${headers.length - 1}" style="${tdBold}border-top:2px solid #000;text-align:center;">TOTAL</td>
             <td style="${tdBold}border-top:2px solid #000;">${granTotal.toLocaleString('es-CL')}</td>
         </tr>`
 
@@ -209,8 +235,9 @@ export default function AcuerdoCalc() {
         </table>`
 
         const pieLine = conPIE ? [
-            'PIE', '', Math.round(result.capPIE), 0, Math.round(result.honPIE),
+            'PIE', fields.fechaAbono.trim(), Math.round(result.capPIE), 0, Math.round(result.honPIE),
             ...(conGastos ? [0] : []),
+            ...(conFlow ? [0] : []),
             Math.round(result.abonoInicial),
         ].join('\t') + '\n' : ''
 
@@ -224,6 +251,7 @@ export default function AcuerdoCalc() {
                     interesFila(f),
                     Math.round(f.honorarios),
                     ...(conGastos ? [Math.round(f.gastosJud)] : []),
+                    ...(conFlow ? [Math.round(f.flow)] : []),
                     totalAjustado,
                 ].join('\t')).join('\n') +
                 '\nTOTAL\t' + granTotal],
@@ -757,6 +785,13 @@ export default function AcuerdoCalc() {
                         <h4 className="section-label">Detalle cuotas</h4>
                         <div className="btns-copy-row">
                             <button
+                                className={`btn-flow ${flow ? 'active' : ''}`}
+                                onClick={toggleFlow}
+                                title={`Agregar comisión Flow (${COMISION_FLOW_PCT.toString().replace('.', ',')}% del saldo capital, repartida en las cuotas)`}
+                            >
+                                {flow ? '✓ Comisión Flow' : '＋ Comisión Flow'}
+                            </button>
+                            <button
                                 className={`btn-copy-tabla ${copiedTabla ? 'copied' : ''}`}
                                 onClick={handleCopiarTabla}
                             >
@@ -773,7 +808,9 @@ export default function AcuerdoCalc() {
 
                     {(() => {
                         const conGastos = modalidad === 'judicial'
+                        const conFlow = result.comisionFlow
                         const conPIE = result.abonoInicial > 0
+                        const colsAntesTotal = 5 + (conGastos ? 1 : 0) + (conFlow ? 1 : 0)
                         return (
                             <div className="table-wrap">
                                 <table className="tranche-table cuota-table">
@@ -785,6 +822,7 @@ export default function AcuerdoCalc() {
                                             <th>Interés</th>
                                             <th>Honorarios</th>
                                             {conGastos && <th>Gastos jud.</th>}
+                                            {conFlow && <th>Comisión Flow</th>}
                                             <th>Total cuota</th>
                                             <th></th>
                                         </tr>
@@ -800,6 +838,7 @@ export default function AcuerdoCalc() {
                                                 <td className="col-int">{formatCLP(0)}</td>
                                                 <td className="col-hon">{formatCLP(result.honPIE)}</td>
                                                 {conGastos && <td className="col-hon">{formatCLP(0)}</td>}
+                                                {conFlow && <td className="col-hon">{formatCLP(0)}</td>}
                                                 <td className="col-total">{formatCLP(result.abonoInicial)}</td>
                                                 <td><CopyBtn value={Math.round(result.abonoInicial)} /></td>
                                             </tr>
@@ -816,6 +855,7 @@ export default function AcuerdoCalc() {
                                                 </td>
                                                 <td className="col-hon">{formatCLP(f.honorarios)}</td>
                                                 {conGastos && <td className="col-hon">{formatCLP(f.gastosJud)}</td>}
+                                                {conFlow && <td className="col-flow">{formatCLP(f.flow)}</td>}
                                                 <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
                                                     {formatCLP(totalAjustado)}
                                                 </td>
@@ -825,7 +865,7 @@ export default function AcuerdoCalc() {
                                     </tbody>
                                     <tfoot>
                                         <tr className="tfoot-row">
-                                            <td colSpan={conGastos ? 6 : 5} style={{ textAlign: 'right' }}>TOTAL</td>
+                                            <td colSpan={colsAntesTotal} style={{ textAlign: 'center' }}>TOTAL</td>
                                             <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
                                                 {formatCLP(granTotal)}
                                             </td>
@@ -840,10 +880,12 @@ export default function AcuerdoCalc() {
                     {/* Totales finales */}
                     <div className="totals-grid">
                         <div className="total-box">
-                            <span className="t-label">Total pagaré</span>
+                            <span className="t-label">
+                                {result.abonoInicial > 0 ? 'Total acuerdo (incluye PIE)' : 'Total pagaré'}
+                            </span>
                             <div className="t-row">
-                                <span className="t-value">{formatCLP(totalAjustado * result.cuotas)}</span>
-                                <CopyBtn value={totalAjustado * result.cuotas} />
+                                <span className="t-value">{formatCLP(granTotal)}</span>
+                                <CopyBtn value={granTotal} />
                             </div>
                         </div>
                         <div className="total-box highlight">

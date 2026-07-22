@@ -717,6 +717,38 @@ input {
   justify-content: flex-end;
 }
 
+/* ── BTN COMISIÓN FLOW (toggle) ── */
+.btn-flow {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: .35rem 1rem;
+  border-radius: 6px;
+  font-size: .8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+
+.btn-flow:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.btn-flow.active {
+  background: rgba(52, 211, 153, .15);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.col-flow {
+  color: var(--green);
+  font-weight: 600;
+}
+
 /* ── BTN COPIAR TABLA ── */
 .btn-copy-tabla {
   background: var(--surface2);

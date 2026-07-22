@@ -160,7 +160,10 @@ export function calcularCapitalDesdeAbonoJudicial(abono, uf) {
  */
 
 
-export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad = 'extrajudicial', gastosJudiciales = 0 }) {
+/** Comisión de la pasarela de pago Flow */
+export const COMISION_FLOW_PCT = 2.2491
+
+export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf, modalidad = 'extrajudicial', gastosJudiciales = 0, comisionFlow = false }) {
     const calcHon = modalidad === 'judicial'
         ? (cap) => calcularHonorariosJudicial(cap, uf)
         : (cap) => calcularHonorarios369(cap, uf)
@@ -169,15 +172,17 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
         ? (abono) => calcularCapitalDesdeAbonoJudicial(abono, uf)
         : (abono) => calcularCapitalDesdeAbono(abono, uf)
 
+    // Todo se trabaja en pesos ENTEROS para que las columnas sumen exacto
     let capPIE = 0
     let honPIE = 0
     if (abonoInicial > 0) {
         const pie = calcAbono(abonoInicial)
-        capPIE = pie.capital
-        honPIE = pie.totalHonorarios
+        capPIE = Math.round(pie.capital)
+        honPIE = Math.round(abonoInicial) - capPIE   // capPIE + honPIE = abono exacto
     }
 
-    const capNuevo = capital - capPIE
+    // capPIE + capNuevo = capital exacto (la clínica recibe el capital completo)
+    const capNuevo = Math.round(capital) - capPIE
 
     // Redondear cada componente individualmente
     const cuotaCap = Math.round(capNuevo / cuotas)
@@ -190,8 +195,14 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
         ? Math.round(gastosJudiciales / cuotas)
         : 0
 
+    // Comisión Flow: % sobre el saldo capital, repartido en las cuotas
+    const comisionFlowTotal = comisionFlow
+        ? Math.round(capital * COMISION_FLOW_PCT / 100)
+        : 0
+    const flowPorCuota = comisionFlow ? Math.round(comisionFlowTotal / cuotas) : 0
+
     // Total es la SUMA de partes redondeadas → siempre cuadra
-    const totalCuota = cuotaCap + interesMes + honMes + gastosJudPorCuota
+    const totalCuota = cuotaCap + interesMes + honMes + gastosJudPorCuota + flowPorCuota
 
     // La última cuota ABSORBE el resto del capital para que la suma dé
     // EXACTO (la clínica recibe el capital completo, sin perder pesos).
@@ -213,6 +224,7 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
             interes: esUltima ? interesUltima : interesMes,
             honorarios: honMes,
             gastosJud: gastosJudPorCuota,
+            flow: flowPorCuota,
             total: totalCuota,
         }
     })
@@ -227,6 +239,8 @@ export function calcularAcuerdo({ capital, abonoInicial, cuotas, tasaMensual, uf
         monto1, monto2, monto3,
         gastosJudiciales, gastosJudPorCuota,
         gastosJudTotal: gastosJudPorCuota * cuotas,
+        comisionFlow, comisionFlowPct: COMISION_FLOW_PCT, comisionFlowTotal,
+        flowPorCuota, flowTotal: flowPorCuota * cuotas,
         totalCuota, totalPagare,
         totalCapital: capNuevo,
         filas,
