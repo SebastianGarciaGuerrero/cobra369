@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { calcularAcuerdo, formatCLP, parseCLPInput, COMISION_FLOW_PCT } from '../utils/calculos'
-import { construirAcuerdoHTML, descargarWord, FILIALES, fechaLarga } from '../utils/generarWord'
+import { construirAcuerdoHTML, descargarWord, cargarLogoBase64, FILIALES, fechaLarga } from '../utils/generarWord'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import logoHadad from '../assets/logo-hadad.png'
@@ -101,7 +101,7 @@ export default function AcuerdoCalc() {
         }))
     }
 
-    function handleGenerarWord() {
+    async function handleGenerarWord() {
         if (!result) return
         const html = construirAcuerdoHTML({
             result,
@@ -125,7 +125,8 @@ export default function AcuerdoCalc() {
             pie30: Math.abs(result.abonoInicial - result.capital * 0.30) < 3,
         })
         const idArchivo = doc.id.trim() || doc.rut.trim() || 'sin-id'
-        descargarWord(html, `ACUERDO ${idArchivo}.doc`)
+        const logo = await cargarLogoBase64(logoHadad)
+        descargarWord(html, `ACUERDO ${idArchivo}.doc`, logo)
     }
 
     // Recalcula con/sin comisión Flow reutilizando los datos ya calculados

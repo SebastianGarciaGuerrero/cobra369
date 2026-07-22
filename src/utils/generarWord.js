@@ -79,6 +79,9 @@ function acortarFechaTexto(str) {
 const miles = (n) => Math.round(n).toLocaleString('es-CL')
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+/** Nombre con que se referencia el logo dentro del documento */
+const LOGO_NOMBRE = 'logo-hadad.png'
+
 /**
  * @param {object} p
  * @param {object} p.result       resultado de calcularAcuerdo
@@ -176,7 +179,10 @@ export function construirAcuerdoHTML({
         </tr></table>`
     })()
 
-    const cuerpo = `
+    const membrete = `
+    <p style="text-align:center;margin:0 0 10pt 0;"><img src="${LOGO_NOMBRE}" width="112" height="126" alt="Hadad &amp; Asociados" /></p>`
+
+    const cuerpo = `${membrete}
     <p style="${p}margin-bottom:0;">COB. ${esc(doc.numeroCob || '*')}</p>
     <p style="${p}margin-bottom:0;">${esc(doc.fechaDoc)}</p>
     <p style="${p}">FILIAL ${esc(doc.filialNombre)}</p>
@@ -204,9 +210,61 @@ export function construirAcuerdoHTML({
 </head><body>${cuerpo}</body></html>`
 }
 
-/** Descarga el HTML como archivo .doc */
-export function descargarWord(html, nombreArchivo) {
-    const blob = new Blob(['﻿', html], { type: 'application/msword' })
+/** base64 de un string UTF-8 */
+function b64Texto(str) {
+    const bytes = new TextEncoder().encode(str)
+    let bin = ''
+    for (const b of bytes) bin += String.fromCharCode(b)
+    return btoa(bin)
+}
+
+/** Parte el base64 en líneas de 76 caracteres (estándar MIME) */
+const enLineas = (b64) => (b64.match(/.{1,76}/g) || []).join('\r\n')
+
+/** Descarga la imagen del logo y la devuelve en base64 */
+export async function cargarLogoBase64(url) {
+    try {
+        const resp = await fetch(url)
+        const buf = new Uint8Array(await resp.arrayBuffer())
+        let bin = ''
+        for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i])
+        return btoa(bin)
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Descarga el acuerdo como archivo .doc.
+ *
+ * Si hay logo se arma un MHTML (multipart/related) con la imagen como
+ * parte separada: es la única forma en que Word muestra la imagen de
+ * manera confiable (los data: URI no los renderiza).
+ */
+export function descargarWord(html, nombreArchivo, logoBase64) {
+    let contenido
+    if (logoBase64) {
+        const b = '----=_NextPart_HADAD_ACUERDO'
+        const base = 'file:///C:/acuerdo/'
+        contenido =
+            'MIME-Version: 1.0\r\n' +
+            `Content-Type: multipart/related; type="text/html"; boundary="${b}"\r\n\r\n` +
+            `--${b}\r\n` +
+            'Content-Type: text/html; charset="utf-8"\r\n' +
+            'Content-Transfer-Encoding: base64\r\n' +
+            `Content-Location: ${base}acuerdo.htm\r\n\r\n` +
+            enLineas(b64Texto(html)) + '\r\n\r\n' +
+            `--${b}\r\n` +
+            'Content-Type: image/png\r\n' +
+            'Content-Transfer-Encoding: base64\r\n' +
+            `Content-Location: ${base}${LOGO_NOMBRE}\r\n\r\n` +
+            enLineas(logoBase64) + '\r\n\r\n' +
+            `--${b}--\r\n`
+    } else {
+        contenido = '﻿' + html
+    }
+
+    const blob = new Blob([contenido], { type: 'application/msword' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
