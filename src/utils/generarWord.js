@@ -82,8 +82,10 @@ function acortarFechaTexto(str) {
 const miles = (n) => Math.round(n).toLocaleString('es-CL')
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-/** Nombre con que se referencia el logo dentro del documento */
+/** Rutas internas del MHTML (mismo esquema que usa Word al guardar) */
+const CARPETA = 'acuerdo_archivos'
 const LOGO_NOMBRE = 'logo-hadad.png'
+const HEADER_NOMBRE = 'header.htm'
 
 const FUENTE = "'Times New Roman', Times, serif"
 
@@ -197,28 +199,35 @@ export function construirAcuerdoHTML({
         </tr></table>`
     })()
 
-    // ── Encabezado de página (se repite en todas las hojas) ──
+    // ── Encabezado de página (archivo aparte, se repite en todas las hojas) ──
     // Primera hoja: logo a la izquierda + COB/fecha/filial a la derecha.
     // Hojas siguientes: solo el logo, para que el membrete no se pierda.
-    const imgLogo = `<img src="${LOGO_NOMBRE}" width="96" height="123" alt="Hadad &amp; Asociados" />`
+    const imgLogo = `<img src="${LOGO_NOMBRE}" width=96 height=123 alt="Hadad &amp; Asociados">`
 
-    const headerPrimera = `<div style="mso-element:header" id="fh1">
-    <table style="width:100%;border-collapse:collapse;">
-    <tr>
-        <td style="padding:0;vertical-align:top;width:40%;">${imgLogo}</td>
-        <td style="padding:0;vertical-align:top;text-align:right;font-family:${FUENTE};font-size:12pt;line-height:1.6;">
-            COB. ${esc(doc.numeroCob || '*')}<br />
-            ${esc(doc.fechaDoc)}<br />
-            FILIAL ${esc(doc.filialNombre)}
-        </td>
-    </tr>
-    </table>
-    <p class="MsoHeader" style="margin:0;font-size:1pt;">&nbsp;</p>
-    </div>`
+    const encabezado = `<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta http-equiv=Content-Type content="text/html; charset=utf-8">
+<style>p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; font-size:12.0pt; font-family:${FUENTE}; }</style>
+</head>
+<body>
+<div style='mso-element:header' id=fh1>
+<table cellpadding=0 cellspacing=0 style='width:100%;border-collapse:collapse'>
+<tr>
+<td style='padding:0;vertical-align:top;width:40%'>${imgLogo}</td>
+<td style='padding:0;vertical-align:top;text-align:right;font-family:${FUENTE};font-size:12.0pt;line-height:1.6'>
+COB. ${esc(doc.numeroCob || '*')}<br>
+${esc(doc.fechaDoc)}<br>
+FILIAL ${esc(doc.filialNombre)}
+</td>
+</tr>
+</table>
+<p class=MsoHeader style='margin:0;font-size:1.0pt'>&nbsp;</p>
+</div>
 
-    const headerResto = `<div style="mso-element:header" id="h1">
-    <p class="MsoHeader" style="margin:0;">${imgLogo}</p>
-    </div>`
+<div style='mso-element:header' id=h1>
+<p class=MsoHeader style='margin:0'>${imgLogo}</p>
+</div>
+</body>
+</html>`
 
     const cuerpo = `
     <p style="${centro}font-size:14pt;margin:0 0 24pt 0;"><u>ACUERDO DE PAGO</u></p>
@@ -237,8 +246,8 @@ export function construirAcuerdoHTML({
     <p style="${p}margin-top:20pt;">SOLICITAMOS Se sirva tener por presentado el presente acuerdo, prestarle su aprobación y redactar en la filial el documento que debe firmar el deudor.</p>
     `
 
-    return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8"><title>Acuerdo de pago</title>
+    const documento = `<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta http-equiv=Content-Type content="text/html; charset=utf-8"><title>Acuerdo de pago</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
 @page Section1 {
@@ -247,21 +256,20 @@ export function construirAcuerdoHTML({
     mso-header-margin: 1.0cm;
     mso-footer-margin: 1.0cm;
     mso-title-page: yes;
-    mso-first-header: url("acuerdo.htm") fh1;
-    mso-header: url("acuerdo.htm") h1;
+    mso-first-header: url("${CARPETA}/${HEADER_NOMBRE}") fh1;
+    mso-header: url("${CARPETA}/${HEADER_NOMBRE}") h1;
     mso-paper-source: 0;
 }
 div.Section1 { page: Section1; }
-p.MsoHeader { margin: 0; font-family: ${FUENTE}; font-size: 12pt; }
+p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; font-size:12.0pt; font-family:${FUENTE}; }
 body { font-family: ${FUENTE}; font-size: 12pt; }
 td, th, p, div { font-family: ${FUENTE}; }
 </style>
 </head><body>
-<div class="Section1">${cuerpo}
-${headerPrimera}
-${headerResto}
-</div>
+<div class="Section1">${cuerpo}</div>
 </body></html>`
+
+    return { documento, encabezado }
 }
 
 /** base64 de un string UTF-8 */
@@ -289,33 +297,34 @@ export async function cargarLogoBase64(url) {
 }
 
 /**
- * Descarga el acuerdo como archivo .doc.
+ * Descarga el acuerdo como archivo .doc en formato MHTML.
  *
- * Si hay logo se arma un MHTML (multipart/related) con la imagen como
- * parte separada: es la única forma en que Word muestra la imagen de
- * manera confiable (los data: URI no los renderiza).
+ * Se arma igual que un "documento web de un solo archivo" de Word:
+ * el documento, el encabezado de página y la imagen viajan como partes
+ * separadas. Así Word reconoce el encabezado y lo repite en cada hoja
+ * (embebido en el propio HTML no lo interpreta y lo deja suelto).
  */
-export function descargarWord(html, nombreArchivo, logoBase64) {
+export function descargarWord({ documento, encabezado, logoBase64, nombreArchivo }) {
     let contenido
     if (logoBase64) {
         const b = '----=_NextPart_HADAD_ACUERDO'
         const base = 'file:///C:/acuerdo/'
+        const parte = (ubicacion, tipo, datos) =>
+            `--${b}\r\n` +
+            `Content-Type: ${tipo}\r\n` +
+            'Content-Transfer-Encoding: base64\r\n' +
+            `Content-Location: ${ubicacion}\r\n\r\n` +
+            enLineas(datos) + '\r\n\r\n'
+
         contenido =
             'MIME-Version: 1.0\r\n' +
             `Content-Type: multipart/related; type="text/html"; boundary="${b}"\r\n\r\n` +
-            `--${b}\r\n` +
-            'Content-Type: text/html; charset="utf-8"\r\n' +
-            'Content-Transfer-Encoding: base64\r\n' +
-            `Content-Location: ${base}acuerdo.htm\r\n\r\n` +
-            enLineas(b64Texto(html)) + '\r\n\r\n' +
-            `--${b}\r\n` +
-            'Content-Type: image/png\r\n' +
-            'Content-Transfer-Encoding: base64\r\n' +
-            `Content-Location: ${base}${LOGO_NOMBRE}\r\n\r\n` +
-            enLineas(logoBase64) + '\r\n\r\n' +
+            parte(`${base}acuerdo.htm`, 'text/html; charset="utf-8"', b64Texto(documento)) +
+            parte(`${base}${CARPETA}/${HEADER_NOMBRE}`, 'text/html; charset="utf-8"', b64Texto(encabezado)) +
+            parte(`${base}${CARPETA}/${LOGO_NOMBRE}`, 'image/png', logoBase64) +
             `--${b}--\r\n`
     } else {
-        contenido = '﻿' + html
+        contenido = '﻿' + documento
     }
 
     const blob = new Blob([contenido], { type: 'application/msword' })

@@ -103,7 +103,7 @@ export default function AcuerdoCalc() {
 
     async function handleGenerarWord() {
         if (!result) return
-        const html = construirAcuerdoHTML({
+        const { documento, encabezado } = construirAcuerdoHTML({
             result,
             fechas,
             doc: {
@@ -125,8 +125,13 @@ export default function AcuerdoCalc() {
             pie30: Math.abs(result.abonoInicial - result.capital * 0.30) < 3,
         })
         const idArchivo = doc.id.trim() || doc.rut.trim() || 'sin-id'
-        const logo = await cargarLogoBase64(logoHadad)
-        descargarWord(html, `ACUERDO ${idArchivo}.doc`, logo)
+        const logoBase64 = await cargarLogoBase64(logoHadad)
+        descargarWord({
+            documento,
+            encabezado,
+            logoBase64,
+            nombreArchivo: `ACUERDO ${idArchivo}.doc`,
+        })
     }
 
     // Recalcula con/sin comisión Flow reutilizando los datos ya calculados
