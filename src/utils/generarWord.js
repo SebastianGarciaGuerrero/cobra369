@@ -192,20 +192,30 @@ export function construirAcuerdoHTML({
         </tr></table>`
     })()
 
-    // ── Membrete: logo a la izquierda, datos a la derecha ──
-    const membrete = `<table style="width:100%;border-collapse:collapse;margin:0 0 22pt 0;">
+    // ── Encabezado de página (se repite en todas las hojas) ──
+    // Primera hoja: logo a la izquierda + COB/fecha/filial a la derecha.
+    // Hojas siguientes: solo el logo, para que el membrete no se pierda.
+    const imgLogo = `<img src="${LOGO_NOMBRE}" width="96" height="123" alt="Hadad &amp; Asociados" />`
+
+    const headerPrimera = `<div style="mso-element:header" id="fh1">
+    <table style="width:100%;border-collapse:collapse;">
     <tr>
-        <td style="padding:0;vertical-align:top;width:40%;"><img src="${LOGO_NOMBRE}" width="96" height="123" alt="Hadad &amp; Asociados" /></td>
+        <td style="padding:0;vertical-align:top;width:40%;">${imgLogo}</td>
         <td style="padding:0;vertical-align:top;text-align:right;font-family:${FUENTE};font-size:12pt;line-height:1.6;">
             COB. ${esc(doc.numeroCob || '*')}<br />
             ${esc(doc.fechaDoc)}<br />
             FILIAL ${esc(doc.filialNombre)}
         </td>
     </tr>
-    </table>`
+    </table>
+    <p class="MsoHeader" style="margin:0;font-size:1pt;">&nbsp;</p>
+    </div>`
 
-    const cuerpo = `${membrete}
+    const headerResto = `<div style="mso-element:header" id="h1">
+    <p class="MsoHeader" style="margin:0;">${imgLogo}</p>
+    </div>`
 
+    const cuerpo = `
     <p style="${centro}font-size:14pt;margin:0 0 24pt 0;"><u>ACUERDO DE PAGO</u></p>
 
     <p style="${p}">${parrafo1}</p>
@@ -217,10 +227,6 @@ export function construirAcuerdoHTML({
     <p style="${p}">${esc(textoCuotas || '')}</p>
     ${bloquePago}
 
-    <br clear="all" style="mso-special-character:line-break;page-break-before:always;" />
-
-    <p style="${centro}margin:0 0 16pt 0;">DETALLE DE CUOTAS</p>
-
     ${tabla}
 
     <p style="${p}margin-top:20pt;">SOLICITAMOS Se sirva tener por presentado el presente acuerdo, prestarle su aprobación y redactar en la filial el documento que debe firmar el deudor.</p>
@@ -229,8 +235,28 @@ export function construirAcuerdoHTML({
     return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>Acuerdo de pago</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
-<style>@page { size: 21cm 29.7cm; margin: 2.2cm 2.2cm; } body { font-family: ${FUENTE}; font-size: 12pt; } td, th, p, div { font-family: ${FUENTE}; }</style>
-</head><body>${cuerpo}</body></html>`
+<style>
+@page Section1 {
+    size: 21.0cm 29.7cm;
+    margin: 4.4cm 2.2cm 2.0cm 2.2cm;
+    mso-header-margin: 1.0cm;
+    mso-footer-margin: 1.0cm;
+    mso-title-page: yes;
+    mso-first-header: url("acuerdo.htm") fh1;
+    mso-header: url("acuerdo.htm") h1;
+    mso-paper-source: 0;
+}
+div.Section1 { page: Section1; }
+p.MsoHeader { margin: 0; font-family: ${FUENTE}; font-size: 12pt; }
+body { font-family: ${FUENTE}; font-size: 12pt; }
+td, th, p, div { font-family: ${FUENTE}; }
+</style>
+</head><body>
+<div class="Section1">${cuerpo}
+${headerPrimera}
+${headerResto}
+</div>
+</body></html>`
 }
 
 /** base64 de un string UTF-8 */
