@@ -210,13 +210,15 @@ export function construirAcuerdoHTML({
 </head>
 <body>
 <div style='mso-element:header' id=fh1>
-<table cellpadding=0 cellspacing=0 style='width:100%;border-collapse:collapse'>
-<tr>
-<td style='padding:0;vertical-align:top;width:40%'>${imgLogo}</td>
-<td style='padding:0;vertical-align:top;text-align:right;font-family:${FUENTE};font-size:12.0pt;line-height:1.6'>
-COB. ${esc(doc.numeroCob || '*')}<br>
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0 width="100%" style='width:100.0%;border-collapse:collapse;mso-table-layout-alt:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;mso-padding-alt:0cm 0cm 0cm 0cm'>
+<tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;mso-yfti-lastrow:yes'>
+<td width="45%" valign=top style='width:45.0%;padding:0cm 0cm 0cm 0cm'>
+<p class=MsoHeader style='margin:0'>${imgLogo}</p>
+</td>
+<td width="55%" valign=top align=right style='width:55.0%;padding:0cm 0cm 0cm 0cm;text-align:right'>
+<p class=MsoHeader align=right style='margin:0;text-align:right;line-height:1.6'>COB. ${esc(doc.numeroCob || '*')}<br>
 ${esc(doc.fechaDoc)}<br>
-FILIAL ${esc(doc.filialNombre)}
+FILIAL ${esc(doc.filialNombre)}</p>
 </td>
 </tr>
 </table>
