@@ -3,7 +3,7 @@ import { calcularAcuerdo, formatCLP, parseCLPInput, COMISION_FLOW_PCT } from '..
 import { construirAcuerdoHTML, descargarWord, cargarLogoBase64, FILIALES, fechaLarga } from '../utils/generarWord'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
-import logoHadad from '../assets/logo-hadad.png'
+import logoHadad from '../assets/logo-hadad-hd.png'
 
 const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
     'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']

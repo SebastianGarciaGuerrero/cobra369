@@ -2,21 +2,24 @@
  * Genera el documento Word del acuerdo de pago, replicando el formato
  * usado por el estudio (ver acuerdos de FILIAL SANTIAGO / ELQUI).
  *
- * Se produce un archivo .doc (HTML con namespaces de Office) que Word
- * abre directamente y permite editar/guardar como .docx.
+ * Se produce un archivo .doc en formato MHTML (multipart/related) con el
+ * logo embebido: Word lo abre directamente y muestra la imagen.
  */
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
+/** Correo al que se envían todos los comprobantes */
+const CORREO_ESTUDIO = 'recepcion@hadadyasociados.cl'
+
 /** Texto de pago por filial. Santiago opera con descuento automático. */
-const porTransferencia = (razon, rut, banco, cuenta, correo) =>
+const porTransferencia = (razon, rut, banco, cuenta) =>
     `Dichas cuotas deberán ser pagadas por transferencia electrónica a la cuenta:\n` +
     `Razón Social: ${razon}\n` +
     `RUT: ${rut}\n` +
     `Banco: ${banco}\n` +
     `Cuenta corriente: ${cuenta}\n` +
-    `Correo: ${correo}\n` +
+    `Correo: ${CORREO_ESTUDIO}\n` +
     `Asunto: RUT y/o ID cuenta.`
 
 export const FILIALES = {
@@ -29,27 +32,27 @@ export const FILIALES = {
     },
     IQUIQUE: {
         label: 'Iquique — Clínica Iquique',
-        transferencia: porTransferencia('Clínica Iquique S.A.', '96.598.850-5', 'Banco de Chile', '107-01934-05', 'pagocuentas.iquique@redsalud.cl'),
+        transferencia: porTransferencia('Clínica Iquique S.A.', '96.598.850-5', 'Banco de Chile', '107-01934-05'),
     },
     ELQUI: {
         label: 'Elqui — Clínica Regional del Elqui',
-        transferencia: porTransferencia('Clínica Regional del Elqui SPA', '99.533.790-8', 'Banco de Chile', '00-120-10118-01', 'pagocuentas.elqui@redsalud.cl'),
+        transferencia: porTransferencia('Clínica Regional del Elqui SPA', '99.533.790-8', 'Banco de Chile', '00-120-10118-01'),
     },
     VALPARAISO: {
         label: 'Valparaíso — Clínica Valparaíso',
-        transferencia: porTransferencia('Clínica Valparaíso SPA', '99.568.720-8', 'Banco de Chile', '00-149-02051-01', 'pagocuentas.valparaiso@redsalud.cl'),
+        transferencia: porTransferencia('Clínica Valparaíso SPA', '99.568.720-8', 'Banco de Chile', '00-149-02051-01'),
     },
     RANCAGUA: {
         label: 'Rancagua — Clínica de Salud Integral',
-        transferencia: porTransferencia('Clínica de Salud Integral S.A.', '78.918.290-6', 'Banco BCI', '56086270', 'pagocuentas.rancagua@redsalud.cl'),
+        transferencia: porTransferencia('Clínica de Salud Integral S.A.', '78.918.290-6', 'Banco BCI', '56086270'),
     },
     TEMUCO: {
         label: 'Temuco — Inmobiliaria Inversalud',
-        transferencia: porTransferencia('Inmobiliaria Inversalud SPA', '96.774.580-4', 'BCI', '66048559', 'pagocuentas.temuco@redsalud.cl'),
+        transferencia: porTransferencia('Inmobiliaria Inversalud SPA', '96.774.580-4', 'BCI', '66048559'),
     },
     MAGALLANES: {
         label: 'Magallanes — Clínica Magallanes',
-        transferencia: porTransferencia('Clínica Magallanes SPA', '96.567.920-0', 'Banco BCI', '71040960', 'pagocuentas.magallanes@redsalud.cl'),
+        transferencia: porTransferencia('Clínica Magallanes SPA', '96.567.920-0', 'Banco BCI', '71040960'),
     },
 }
 
@@ -82,6 +85,8 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 /** Nombre con que se referencia el logo dentro del documento */
 const LOGO_NOMBRE = 'logo-hadad.png'
 
+const FUENTE = "'Times New Roman', Times, serif"
+
 /**
  * @param {object} p
  * @param {object} p.result       resultado de calcularAcuerdo
@@ -103,7 +108,7 @@ export function construirAcuerdoHTML({
     const nombre = esc(doc.nombre || '_______________')
     const tratamiento = doc.tratamiento || 'don'
 
-    // ── Encabezado de la tabla ──
+    // ── Tabla de cuotas: compacta y sin quiebres de línea ──
     const headers = [
         'N° CUOTAS', 'FECHA', 'MONTO ABONO CLÍNICA', 'INTERÉS',
         conGastos ? 'HONORARIOS' : 'GASTO COBRANZA',
@@ -112,9 +117,10 @@ export function construirAcuerdoHTML({
         'MONTO TOTAL CUOTA',
     ]
 
-    const th = 'border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;font-size:9pt;font-family:Arial,sans-serif;'
-    const td = 'border:1px solid #000;padding:3px 6px;text-align:center;font-size:9pt;font-family:Arial,sans-serif;'
-    const tdb = td + 'font-weight:bold;'
+    const celda = `border:1px solid #000;padding:1.5pt 4pt;text-align:center;font-size:9pt;font-family:${FUENTE};white-space:nowrap;mso-line-height-rule:exactly;line-height:11pt;`
+    const th = celda + 'font-weight:bold;background:#e9e9e9;font-size:8pt;'
+    const td = celda
+    const tdb = celda + 'font-weight:bold;'
 
     const filaPIE = conPIE ? `<tr>
         <td style="${tdb}">PIE${pie30 ? ' (30%)' : ''}</td>
@@ -143,7 +149,7 @@ export function construirAcuerdoHTML({
         <td style="${tdb}">${miles(granTotal)}</td>
     </tr>`
 
-    const tabla = `<table style="border-collapse:collapse;width:100%;margin:12pt 0;">
+    const tabla = `<table style="border-collapse:collapse;width:100%;margin:14pt 0 16pt 0;">
         <tr>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr>
         ${filaPIE}${filasCuotas}${filaTotal}
     </table>`
@@ -161,10 +167,10 @@ export function construirAcuerdoHTML({
         parrafo2 = `Sobre este monto pendiente las partes hemos acordado celebrar el siguiente acuerdo, en donde ${tratamiento} ${nombre} se obliga a pagar la deuda antes descrita de la siguiente forma:`
     }
 
-    const p = 'font-family:Arial,sans-serif;font-size:11pt;text-align:justify;margin:0 0 10pt 0;line-height:1.4;'
-    const centro = 'font-family:Arial,sans-serif;font-size:11pt;text-align:center;margin:0 0 6pt 0;font-weight:bold;'
+    const p = `font-family:${FUENTE};font-size:12pt;text-align:justify;margin:0 0 14pt 0;line-height:1.5;`
+    const centro = `font-family:${FUENTE};font-size:12pt;text-align:center;margin:0;font-weight:bold;line-height:1.5;`
 
-    // Bloque de pago: párrafo simple (Santiago) o ficha con los datos bancarios
+    // ── Bloque de pago: párrafo simple (Santiago) o ficha bancaria ──
     const bloquePago = (() => {
         const lineas = String(doc.transferencia || '').split('\n').map(l => l.trim()).filter(Boolean)
         if (lineas.length <= 1) return `<p style="${p}">${esc(lineas[0] || '')}</p>`
@@ -173,40 +179,46 @@ export function construirAcuerdoHTML({
             if (i < 0) return `<div>${esc(l)}</div>`
             return `<div><b>${esc(l.slice(0, i + 1))}</b> ${esc(l.slice(i + 1).trim())}</div>`
         }).join('')
-        return `<p style="${p}margin-bottom:6pt;">${esc(lineas[0])}</p>
-        <table style="border-collapse:collapse;margin:0 0 12pt 14pt;"><tr>
-        <td style="border-left:3px solid #555;background:#f2f2f2;padding:8pt 14pt;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.7;">${items}</td>
+        return `<p style="${p}margin-bottom:8pt;">${esc(lineas[0])}</p>
+        <table style="border-collapse:collapse;margin:0 0 14pt 18pt;"><tr>
+        <td style="border-left:3px solid #555;background:#f2f2f2;padding:8pt 16pt;font-family:${FUENTE};font-size:11pt;line-height:1.6;white-space:nowrap;">${items}</td>
         </tr></table>`
     })()
 
-    const membrete = `
-    <p style="text-align:center;margin:0 0 10pt 0;"><img src="${LOGO_NOMBRE}" width="112" height="126" alt="Hadad &amp; Asociados" /></p>`
+    // ── Membrete: logo a la izquierda, datos a la derecha ──
+    const membrete = `<table style="width:100%;border-collapse:collapse;margin:0 0 22pt 0;">
+    <tr>
+        <td style="padding:0;vertical-align:top;width:40%;"><img src="${LOGO_NOMBRE}" width="96" height="123" alt="Hadad &amp; Asociados" /></td>
+        <td style="padding:0;vertical-align:top;text-align:right;font-family:${FUENTE};font-size:12pt;line-height:1.6;">
+            COB. ${esc(doc.numeroCob || '*')}<br />
+            ${esc(doc.fechaDoc)}<br />
+            FILIAL ${esc(doc.filialNombre)}
+        </td>
+    </tr>
+    </table>`
 
     const cuerpo = `${membrete}
-    <p style="${p}margin-bottom:0;">COB. ${esc(doc.numeroCob || '*')}</p>
-    <p style="${p}margin-bottom:0;">${esc(doc.fechaDoc)}</p>
-    <p style="${p}">FILIAL ${esc(doc.filialNombre)}</p>
 
-    <p style="${centro}font-size:13pt;margin:16pt 0 14pt 0;"><u>ACUERDO DE PAGO</u></p>
+    <p style="${centro}font-size:14pt;margin:0 0 24pt 0;"><u>ACUERDO DE PAGO</u></p>
 
     <p style="${p}">${parrafo1}</p>
     <p style="${p}">${parrafo2}</p>
 
-    <p style="${centro}margin-top:12pt;">PAGARÉ EN CUOTAS A REALIZAR</p>
-    <p style="${centro}">TOTAL PAGARÉ: $${miles(granTotal)}</p>
+    <p style="${centro}margin-top:20pt;">PAGARÉ EN CUOTAS A REALIZAR</p>
+    <p style="${centro}margin-bottom:18pt;">TOTAL PAGARÉ: $${miles(granTotal)}</p>
 
     <p style="${p}">${esc(textoCuotas || '')}</p>
     ${bloquePago}
 
     ${tabla}
 
-    <p style="${p}margin-top:14pt;">SOLICITAMOS Se sirva tener por presentado el presente acuerdo, prestarle su aprobación y redactar en la filial el documento que debe firmar el deudor.</p>
+    <p style="${p}margin-top:20pt;">SOLICITAMOS Se sirva tener por presentado el presente acuerdo, prestarle su aprobación y redactar en la filial el documento que debe firmar el deudor.</p>
     `
 
     return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>Acuerdo de pago</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
-<style>@page { size: 21cm 29.7cm; margin: 2.2cm 2.2cm; } body { font-family: Arial, sans-serif; }</style>
+<style>@page { size: 21cm 29.7cm; margin: 2.2cm 2.2cm; } body { font-family: ${FUENTE}; font-size: 12pt; } td, th, p, div { font-family: ${FUENTE}; }</style>
 </head><body>${cuerpo}</body></html>`
 }
 
