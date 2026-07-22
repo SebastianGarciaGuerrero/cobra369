@@ -118,15 +118,20 @@ export function construirAcuerdoHTML({
     ]
 
     // Propiedades mso-* : Word las respeta y permiten comprimir la tabla
-    // (altura de fila exacta, padding interno mínimo, sin interlineado extra)
-    const celda = `border:1px solid #000;padding:0.5pt 3pt;text-align:center;` +
-        `font-size:8.5pt;font-family:${FUENTE};white-space:nowrap;` +
+    // (altura de fila exacta, padding interno mínimo, sin interlineado extra).
+    // Los valores van a 12pt como el resto del documento; los encabezados
+    // más chicos y en dos líneas, que es lo único que haría desbordar.
+    const celda = `border:1px solid #000;padding:0.5pt 2pt;text-align:center;` +
+        `font-size:12pt;font-family:${FUENTE};white-space:nowrap;` +
+        `mso-line-height-rule:exactly;line-height:13pt;vertical-align:middle;`
+    const th = `border:1px solid #000;padding:1pt 2pt;text-align:center;` +
+        `font-size:8.5pt;font-family:${FUENTE};font-weight:bold;background:#e9e9e9;` +
         `mso-line-height-rule:exactly;line-height:9.5pt;vertical-align:middle;`
-    const th = celda + 'font-weight:bold;background:#e9e9e9;font-size:7.5pt;'
     const td = celda
     const tdb = celda + 'font-weight:bold;'
     // Fila con altura exacta: evita que Word la "engorde"
-    const filaAlt = ' style="height:10pt;mso-height-rule:exactly;"'
+    const filaAlt = ' style="height:13.5pt;mso-height-rule:exactly;"'
+    const filaAltTh = ' style="height:22pt;mso-height-rule:exactly;"'
 
     const filaPIE = conPIE ? `<tr${filaAlt}>
         <td style="${tdb}">PIE${pie30 ? ' (30%)' : ''}</td>
@@ -157,7 +162,7 @@ export function construirAcuerdoHTML({
 
     const tabla = `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 16pt 0;` +
         `mso-table-lspace:0pt;mso-table-rspace:0pt;mso-padding-alt:0pt 3pt 0pt 3pt;mso-table-layout-alt:fixed;">
-        <thead><tr${filaAlt}>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr></thead>
+        <thead><tr${filaAltTh}>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr></thead>
         <tbody>${filaPIE}${filasCuotas}${filaTotal}</tbody>
     </table>`
 
