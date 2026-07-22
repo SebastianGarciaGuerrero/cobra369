@@ -123,17 +123,17 @@ export function construirAcuerdoHTML({
     // (altura de fila exacta, padding interno mínimo, sin interlineado extra).
     // Los valores van a 12pt como el resto del documento; los encabezados
     // más chicos y en dos líneas, que es lo único que haría desbordar.
-    const celda = `border:1px solid #000;padding:0.5pt 2pt;text-align:center;` +
+    const celda = `border:1px solid #000;padding:3pt 3pt;text-align:center;` +
         `font-size:12pt;font-family:${FUENTE};white-space:nowrap;` +
         `mso-line-height-rule:exactly;line-height:13pt;vertical-align:middle;`
-    const th = `border:1px solid #000;padding:1pt 2pt;text-align:center;` +
+    const th = `border:1px solid #000;padding:3pt 3pt;text-align:center;` +
         `font-size:8.5pt;font-family:${FUENTE};font-weight:bold;background:#e9e9e9;` +
-        `mso-line-height-rule:exactly;line-height:9.5pt;vertical-align:middle;`
+        `mso-line-height-rule:exactly;line-height:10pt;vertical-align:middle;`
     const td = celda
     const tdb = celda + 'font-weight:bold;'
-    // Fila con altura exacta: evita que Word la "engorde"
-    const filaAlt = ' style="height:13.5pt;mso-height-rule:exactly;"'
-    const filaAltTh = ' style="height:22pt;mso-height-rule:exactly;"'
+    // Altura exacta de fila: compacta pero con aire arriba y abajo
+    const filaAlt = ' style="height:20pt;mso-height-rule:exactly;"'
+    const filaAltTh = ' style="height:28pt;mso-height-rule:exactly;"'
 
     const filaPIE = conPIE ? `<tr${filaAlt}>
         <td style="${tdb}">PIE${pie30 ? ' (30%)' : ''}</td>
