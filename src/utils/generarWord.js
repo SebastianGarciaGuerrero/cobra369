@@ -123,17 +123,17 @@ export function construirAcuerdoHTML({
     // (altura de fila exacta, padding interno mínimo, sin interlineado extra).
     // Los valores van a 12pt como el resto del documento; los encabezados
     // más chicos y en dos líneas, que es lo único que haría desbordar.
-    const celda = `border:1px solid #000;padding:3pt 3pt;text-align:center;` +
+    const celda = `border:1px solid #000;padding:2pt 3pt;text-align:center;` +
         `font-size:12pt;font-family:${FUENTE};white-space:nowrap;` +
         `mso-line-height-rule:exactly;line-height:13pt;vertical-align:middle;`
-    const th = `border:1px solid #000;padding:3pt 3pt;text-align:center;` +
+    const th = `border:1px solid #000;padding:2pt 3pt;text-align:center;` +
         `font-size:8.5pt;font-family:${FUENTE};font-weight:bold;background:#e9e9e9;` +
         `mso-line-height-rule:exactly;line-height:10pt;vertical-align:middle;`
     const td = celda
     const tdb = celda + 'font-weight:bold;'
     // Altura exacta de fila: compacta pero con aire arriba y abajo
-    const filaAlt = ' style="height:20pt;mso-height-rule:exactly;"'
-    const filaAltTh = ' style="height:28pt;mso-height-rule:exactly;"'
+    const filaAlt = ' style="height:17pt;mso-height-rule:exactly;"'
+    const filaAltTh = ' style="height:26pt;mso-height-rule:exactly;"'
 
     const filaPIE = conPIE ? `<tr${filaAlt}>
         <td style="${tdb}">PIE${pie30 ? ' (30%)' : ''}</td>
@@ -162,7 +162,7 @@ export function construirAcuerdoHTML({
         <td style="${tdb}">${miles(granTotal)}</td>
     </tr>`
 
-    const tabla = `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 16pt 0;` +
+    const tabla = `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:18pt 0 16pt 0;` +
         `mso-table-lspace:0pt;mso-table-rspace:0pt;mso-padding-alt:0pt 3pt 0pt 3pt;mso-table-layout-alt:fixed;">
         <thead><tr${filaAltTh}>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr></thead>
         <tbody>${filaPIE}${filasCuotas}${filaTotal}</tbody>
@@ -242,6 +242,8 @@ FILIAL ${esc(doc.filialNombre)}</p>
 
     <p style="${p}">${esc(textoCuotas || '')}</p>
     ${bloquePago}
+
+    <p style="margin:0;font-size:12pt;line-height:1.5;">&nbsp;</p>
 
     ${tabla}
 
