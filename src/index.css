@@ -101,12 +101,9 @@ input {
 }
 
 .nav-logo {
-  height: 38px;
-  width: auto;
+  height: 40px;
+  width: 40px;
   display: block;
-  border-radius: 4px;
-  background: #fff;
-  padding: 2px 4px;
 }
 
 .nav-brand-text {

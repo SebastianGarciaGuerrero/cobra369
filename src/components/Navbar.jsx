@@ -1,5 +1,3 @@
-import logoHadad from '../assets/logo-hadad-hd.png'
-
 const LINKS = [
     { id: 'honorarios', icon: '📊', label: 'Honorarios' },
     { id: 'abono', icon: '💰', label: 'Abono' },
@@ -10,7 +8,7 @@ export default function Navbar({ view, navigate }) {
     return (
         <nav className="navbar">
             <button className="nav-brand" onClick={() => navigate('home')} title="Inicio">
-                <img src={logoHadad} alt="Hadad & Asociados" className="nav-logo" />
+                <img src="/cubo.png" alt="Calculadora de Cobranza" className="nav-logo" />
                 <span className="nav-brand-text">
                     <strong>Hadad &amp; Asociados</strong>
                     <small>Calculadora de Cobranza</small>
