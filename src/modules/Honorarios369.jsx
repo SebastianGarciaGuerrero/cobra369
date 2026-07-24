@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { calcularHonorarios369, calcularHonorariosJudicial, formatCLP, parseCLPInput } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
+import BtnTraerUF from '../components/BtnTraerUF'
 
 export default function Honorarios369() {
     const [capital, setCapital] = useState('')
@@ -82,7 +83,10 @@ export default function Honorarios369() {
                     </div>
                     {modalidad === 'extrajudicial' && (
                         <div className="form-group">
-                            <label>Valor UF del día</label>
+                            <div className="label-row">
+                                <label>Valor UF del día</label>
+                                <BtnTraerUF onUF={v => { setUf(v); guardarUF(v) }} />
+                            </div>
                             <input
                                 type="text"
                                 inputMode="decimal"

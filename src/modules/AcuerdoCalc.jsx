@@ -3,6 +3,7 @@ import { calcularAcuerdo, formatCLP, parseCLPInput, COMISION_FLOW_PCT } from '..
 import { construirAcuerdoHTML, descargarWord, cargarLogoBase64, FILIALES, fechaLarga } from '../utils/generarWord'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
+import BtnTraerUF from '../components/BtnTraerUF'
 import logoHadad from '../assets/logo-hadad-hd.png'
 
 const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
@@ -563,7 +564,10 @@ export default function AcuerdoCalc() {
 
                     {modalidad === 'extrajudicial' ? (
                         <div className="form-group">
-                            <label>Valor UF del día</label>
+                            <div className="label-row">
+                                <label>Valor UF del día</label>
+                                <BtnTraerUF onUF={v => { set('uf', v); guardarUF(v) }} />
+                            </div>
                             <input
                                 type="text"
                                 inputMode="decimal"

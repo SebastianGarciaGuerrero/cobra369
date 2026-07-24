@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { calcularCapitalDesdeAbono, calcularCapitalDesdeAbonoJudicial, formatCLP, parseCLPInput } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
+import BtnTraerUF from '../components/BtnTraerUF'
 
 
 export default function AbonoCalc() {
@@ -87,7 +88,10 @@ export default function AbonoCalc() {
                     </div>
                     {modalidad === 'extrajudicial' && (
                         <div className="form-group">
-                            <label>Valor UF del día</label>
+                            <div className="label-row">
+                                <label>Valor UF del día</label>
+                                <BtnTraerUF onUF={v => { setUf(v); guardarUF(v) }} />
+                            </div>
                             <input
                                 type="text"
                                 inputMode="decimal"
