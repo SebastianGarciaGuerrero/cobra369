@@ -48,6 +48,20 @@ export function IconAcuerdo(props) {
     )
 }
 
+// Marca → balanza de la justicia (line icon)
+export function IconBalanza(props) {
+    return (
+        <svg {...base} {...props}>
+            <path d="M12 3.5v17" />
+            <path d="M7.5 20.5h9" />
+            <path d="M4 7.5h4c1.6 0 3.2-.7 4-1.2.8.5 2.4 1.2 4 1.2h4" />
+            <path d="M4 7.5 1.7 13c1.4 1.2 3.2 1.2 4.6 0z" />
+            <path d="M20 7.5 17.7 13c1.4 1.2 3.2 1.2 4.6 0z" />
+            <circle cx="12" cy="4" r="1.2" />
+        </svg>
+    )
+}
+
 export const ICONS = {
     honorarios: IconHonorarios,
     abono: IconAbono,
