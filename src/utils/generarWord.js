@@ -123,48 +123,53 @@ export function construirAcuerdoHTML({
     // (altura de fila exacta, padding interno mínimo, sin interlineado extra).
     // Los valores van a 12pt como el resto del documento; los encabezados
     // más chicos y en dos líneas, que es lo único que haría desbordar.
-    const celda = `border:1px solid #000;padding:0.5pt 2pt;text-align:center;` +
-        `font-size:12pt;font-family:${FUENTE};white-space:nowrap;` +
-        `mso-line-height-rule:exactly;line-height:13pt;vertical-align:middle;`
-    const th = `border:1px solid #000;padding:1pt 2pt;text-align:center;` +
-        `font-size:8.5pt;font-family:${FUENTE};font-weight:bold;background:#e9e9e9;` +
-        `mso-line-height-rule:exactly;line-height:9.5pt;vertical-align:middle;`
+    // Compacto SIN recortar: la fila se ajusta al contenido (nada de
+    // mso-height-rule:exactly, que en Word corta el texto). Lo que
+    // "engordaba" las filas era el margen de 8pt que Word pone bajo cada
+    // párrafo de celda; se anula en el <style> (p.MsoNormal margin:0).
+    // El valor de cada celda va envuelto en <p class=ct> para heredarlo.
+    const celda = `border:1px solid #000;padding:0.5pt 3pt;text-align:center;` +
+        `font-size:12pt;font-family:${FUENTE};white-space:nowrap;vertical-align:middle;`
+    const th = `border:1px solid #000;padding:0.5pt 3pt;text-align:center;` +
+        `font-size:8.5pt;font-family:${FUENTE};font-weight:bold;background:#e9e9e9;vertical-align:middle;`
     const td = celda
     const tdb = celda + 'font-weight:bold;'
-    // Fila con altura exacta: compacta (versión que se veía bien)
-    const filaAlt = ' style="height:13.5pt;mso-height-rule:exactly;"'
-    const filaAltTh = ' style="height:22pt;mso-height-rule:exactly;"'
+    const filaAlt = ''
+    const filaAltTh = ''
+    // Envuelve el valor en un párrafo sin margen ni interlineado extra
+    const ct = (v) => `<p class=ct>${v}</p>`
+    const cth = (v) => `<p class=cth>${v}</p>`
 
-    const filaPIE = conPIE ? `<tr${filaAlt}>
-        <td style="${tdb}">PIE${pie30 ? ' (30%)' : ''}</td>
-        <td style="${td}">${esc(acortarFechaTexto(fechaAbono))}</td>
-        <td style="${td}">${miles(result.capPIE)}</td>
-        <td style="${td}">0</td>
-        <td style="${td}">${miles(result.honPIE)}</td>
-        ${conGastos ? `<td style="${td}">0</td>` : ''}
-        ${conFlow ? `<td style="${td}">0</td>` : ''}
-        <td style="${tdb}">${miles(result.abonoInicial)}</td>
+    const filaPIE = conPIE ? `<tr>
+        <td style="${tdb}">${ct('PIE' + (pie30 ? ' (30%)' : ''))}</td>
+        <td style="${td}">${ct(esc(acortarFechaTexto(fechaAbono)) || '&nbsp;')}</td>
+        <td style="${td}">${ct(miles(result.capPIE))}</td>
+        <td style="${td}">${ct('0')}</td>
+        <td style="${td}">${ct(miles(result.honPIE))}</td>
+        ${conGastos ? `<td style="${td}">${ct('0')}</td>` : ''}
+        ${conFlow ? `<td style="${td}">${ct('0')}</td>` : ''}
+        <td style="${tdb}">${ct(miles(result.abonoInicial))}</td>
     </tr>` : ''
 
-    const filasCuotas = result.filas.map((f, i) => `<tr${filaAlt}>
-        <td style="${td}">${f.nro}</td>
-        <td style="${td}">${fechaCorta(fechas[i])}</td>
-        <td style="${td}">${miles(f.capital)}</td>
-        <td style="${td}">${miles(f.interes + (totalCuota - result.totalCuota))}</td>
-        <td style="${td}">${miles(f.honorarios)}</td>
-        ${conGastos ? `<td style="${td}">${miles(f.gastosJud)}</td>` : ''}
-        ${conFlow ? `<td style="${td}">${miles(f.flow)}</td>` : ''}
-        <td style="${tdb}">${miles(totalCuota)}</td>
+    const filasCuotas = result.filas.map((f, i) => `<tr>
+        <td style="${td}">${ct(f.nro)}</td>
+        <td style="${td}">${ct(fechaCorta(fechas[i]) || '&nbsp;')}</td>
+        <td style="${td}">${ct(miles(f.capital))}</td>
+        <td style="${td}">${ct(miles(f.interes + (totalCuota - result.totalCuota)))}</td>
+        <td style="${td}">${ct(miles(f.honorarios))}</td>
+        ${conGastos ? `<td style="${td}">${ct(miles(f.gastosJud))}</td>` : ''}
+        ${conFlow ? `<td style="${td}">${ct(miles(f.flow))}</td>` : ''}
+        <td style="${tdb}">${ct(miles(totalCuota))}</td>
     </tr>`).join('')
 
-    const filaTotal = `<tr${filaAlt}>
-        <td colspan="${headers.length - 1}" style="${tdb}text-align:center;">TOTAL</td>
-        <td style="${tdb}">${miles(granTotal)}</td>
+    const filaTotal = `<tr>
+        <td colspan="${headers.length - 1}" style="${tdb}text-align:center;">${ct('TOTAL')}</td>
+        <td style="${tdb}">${ct(miles(granTotal))}</td>
     </tr>`
 
     const tabla = `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:18pt 0 16pt 0;` +
         `mso-table-lspace:0pt;mso-table-rspace:0pt;mso-padding-alt:0pt 3pt 0pt 3pt;mso-table-layout-alt:fixed;">
-        <thead><tr${filaAltTh}>${headers.map(h => `<th style="${th}">${h}</th>`).join('')}</tr></thead>
+        <thead><tr>${headers.map(h => `<th style="${th}">${cth(h)}</th>`).join('')}</tr></thead>
         <tbody>${filaPIE}${filasCuotas}${filaTotal}</tbody>
     </table>`
 
@@ -267,7 +272,12 @@ FILIAL ${esc(doc.filialNombre)}</p>
 div.Section1 { page: Section1; }
 p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; font-size:12.0pt; font-family:${FUENTE}; }
 body { font-family: ${FUENTE}; font-size: 12pt; }
-td, th, p, div { font-family: ${FUENTE}; }
+td, th, div { font-family: ${FUENTE}; }
+/* Word pone 8pt de margen bajo cada párrafo por defecto: eso engordaba
+   las filas. Los párrafos de celda van sin margen ni interlineado extra. */
+p.ct, p.cth { margin:0cm; mso-margin-top-alt:0cm; mso-margin-bottom-alt:0cm; line-height:1.0; font-family:${FUENTE}; }
+p.ct { font-size:12.0pt; }
+p.cth { font-size:8.5pt; font-weight:bold; }
 </style>
 </head><body>
 <div class="Section1">${cuerpo}</div>
