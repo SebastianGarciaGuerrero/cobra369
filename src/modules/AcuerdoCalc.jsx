@@ -1004,7 +1004,7 @@ export default function AcuerdoCalc() {
                                 </div>
                                 <div className="form-group doc-col-2">
                                     <label>Nombre del deudor</label>
-                                    <input type="text" placeholder="Ej: Marco Antonio Córdova González"
+                                    <input type="text" placeholder="Ej: Lionel Andrés Messi Cuccittini"
                                         value={doc.nombre} onChange={e => setDocField('nombre', e.target.value)} />
                                 </div>
                                 <div className="form-group">

@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import Honorarios369 from './modules/Honorarios369'
 import AbonoCalc from './modules/AbonoCalc'
 import AcuerdoCalc from './modules/AcuerdoCalc'
+import Footer from './components/Footer'
 
 export default function App() {
   const [view, setView] = useState('home')
@@ -15,10 +16,13 @@ export default function App() {
           <span className="nav-title">CalcCobro</span>
         </nav>
       )}
-      {view === 'home' && <Home navigate={setView} />}
-      {view === 'honorarios' && <Honorarios369 />}
-      {view === 'abono' && <AbonoCalc />}
-      {view === 'acuerdo' && <AcuerdoCalc />}
+      <div className="app-body">
+        {view === 'home' && <Home navigate={setView} />}
+        {view === 'honorarios' && <Honorarios369 />}
+        {view === 'abono' && <AbonoCalc />}
+        {view === 'acuerdo' && <AcuerdoCalc />}
+      </div>
+      <Footer />
     </div>
   )
 }
