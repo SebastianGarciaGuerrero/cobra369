@@ -155,7 +155,12 @@ input {
 }
 
 .nav-link-icon {
-  font-size: 1rem;
+  display: inline-flex;
+}
+
+.nav-link-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 @media (max-width: 640px) {
@@ -231,7 +236,13 @@ input {
 }
 
 .card-icon {
-  font-size: 2rem;
+  display: inline-flex;
+  color: var(--accent, var(--primary));
+}
+
+.card-icon svg {
+  width: 30px;
+  height: 30px;
 }
 
 .card-body h2 {
