@@ -1,4 +1,4 @@
-import { ICONS, IconBalanza } from '../components/icons'
+import { ICONS } from '../components/icons'
 
 const MODULES = [
     {
@@ -25,8 +25,7 @@ export default function Home({ navigate }) {
     return (
         <main className="home">
             <header className="home-header">
-                <div className="home-badge"><IconBalanza /></div>
-                <span className="home-eyebrow">Hadad &amp; Asociados · Uso interno</span>
+                <img src="/cubo.png" alt="Calculadora de Cobranza" className="home-mark" />
                 <h1>Calculadora de Cobranza</h1>
                 <p>Honorarios, abonos y acuerdos de pago con cálculos exactos y documentos listos para firmar.</p>
             </header>
