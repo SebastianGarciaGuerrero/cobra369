@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import Honorarios369 from './modules/Honorarios369'
 import AbonoCalc from './modules/AbonoCalc'
 import AcuerdoCalc from './modules/AcuerdoCalc'
+import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 
 export default function App() {
@@ -10,12 +11,7 @@ export default function App() {
 
   return (
     <div className="app">
-      {view !== 'home' && (
-        <nav className="top-nav">
-          <button className="btn-back" onClick={() => setView('home')}>← Volver</button>
-          <span className="nav-title">CalcCobro</span>
-        </nav>
-      )}
+      <Navbar view={view} navigate={setView} />
       <div className="app-body">
         {view === 'home' && <Home navigate={setView} />}
         {view === 'honorarios' && <Honorarios369 />}
