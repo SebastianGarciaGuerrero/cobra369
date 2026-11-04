@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcularCapitalDesdeAbono, calcularCapitalDesdeAbonoJudicial, formatCLP, parseCLPInput } from '../utils/calculos'
+import { calcularCapitalDesdeAbono, calcularCapitalDesdeAbonoJudicial, formatCLP, formatMiles, parseCLPInput } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import BtnTraerUF from '../components/BtnTraerUF'
@@ -81,7 +81,7 @@ export default function AbonoCalc() {
                             value={abono}
                             onChange={e => {
                                 const raw = e.target.value.replace(/\D/g, '')
-                                setAbono(raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                setAbono(raw === '' ? '' : formatMiles(Number(raw)))
                             }}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />

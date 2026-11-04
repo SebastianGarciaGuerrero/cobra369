@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcularAcuerdo, formatCLP, parseCLPInput, COMISION_FLOW_PCT } from '../utils/calculos'
+import { calcularAcuerdo, formatCLP, formatMiles, parseCLPInput, COMISION_FLOW_PCT } from '../utils/calculos'
 import { construirAcuerdoHTML, descargarWord, cargarLogoBase64, FILIALES, fechaLarga } from '../utils/generarWord'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
@@ -157,7 +157,7 @@ export default function AcuerdoCalc() {
     function calcPie30(capitalStr) {
         const cap = parseCLPInput(capitalStr)
         if (isNaN(cap) || cap <= 0) return ''
-        return Math.round(cap * 0.30).toLocaleString('es-CL')
+        return formatMiles(cap * 0.30)
     }
 
     function togglePie30() {
@@ -259,12 +259,12 @@ export default function AcuerdoCalc() {
         const pieRow = conPIE ? `<tr>
             <td style="${tdBold}">PIE</td>
             <td style="${tdStyle}">${fields.fechaAbono.trim() !== '' ? fields.fechaAbono : ''}</td>
-            <td style="${tdStyle}">${Math.round(result.capPIE).toLocaleString('es-CL')}</td>
+            <td style="${tdStyle}">${formatMiles(result.capPIE)}</td>
             <td style="${tdStyle}">0</td>
-            <td style="${tdStyle}">${Math.round(result.honPIE).toLocaleString('es-CL')}</td>
+            <td style="${tdStyle}">${formatMiles(result.honPIE)}</td>
             ${conGastos ? `<td style="${tdStyle}">0</td>` : ''}
             ${conFlow ? `<td style="${tdStyle}">0</td>` : ''}
-            <td style="${tdBold}">${Math.round(result.abonoInicial).toLocaleString('es-CL')}</td>
+            <td style="${tdBold}">${formatMiles(result.abonoInicial)}</td>
         </tr>` : ''
 
         const bodyRows = result.filas.map((f, i) => {
@@ -274,18 +274,18 @@ export default function AcuerdoCalc() {
             return `<tr>
             <td style="${td}">${f.nro}</td>
             <td style="${td}">${fechas[i] ? formatFecha(fechas[i]) : ''}</td>
-            <td style="${td}">${Math.round(f.capital).toLocaleString('es-CL')}</td>
-            <td style="${td}">${interesFila(f).toLocaleString('es-CL')}</td>
-            <td style="${td}">${Math.round(f.honorarios).toLocaleString('es-CL')}</td>
-            ${conGastos ? `<td style="${td}">${Math.round(f.gastosJud).toLocaleString('es-CL')}</td>` : ''}
-            ${conFlow ? `<td style="${td}">${Math.round(f.flow).toLocaleString('es-CL')}</td>` : ''}
-            <td style="${tdb}">${totalAjustado.toLocaleString('es-CL')}</td>
+            <td style="${td}">${formatMiles(f.capital)}</td>
+            <td style="${td}">${formatMiles(interesFila(f))}</td>
+            <td style="${td}">${formatMiles(f.honorarios)}</td>
+            ${conGastos ? `<td style="${td}">${formatMiles(f.gastosJud)}</td>` : ''}
+            ${conFlow ? `<td style="${td}">${formatMiles(f.flow)}</td>` : ''}
+            <td style="${tdb}">${formatMiles(totalAjustado)}</td>
         </tr>`
         }).join('')
 
         const totalsRow = `<tr>
             <td colspan="${headers.length - 1}" style="${tdBold}border-top:2px solid #000;text-align:center;">TOTAL</td>
-            <td style="${tdBold}border-top:2px solid #000;">${granTotal.toLocaleString('es-CL')}</td>
+            <td style="${tdBold}border-top:2px solid #000;">${formatMiles(granTotal)}</td>
         </tr>`
 
         const html = `<table style="border-collapse:collapse;width:100%;">
@@ -551,7 +551,7 @@ export default function AcuerdoCalc() {
                             value={fields.capital}
                             onChange={e => {
                                 const raw = e.target.value.replace(/\D/g, '')
-                                const formatted = raw === '' ? '' : Number(raw).toLocaleString('es-CL')
+                                const formatted = raw === '' ? '' : formatMiles(Number(raw))
                                 setFields(p => ({
                                     ...p,
                                     capital: formatted,
@@ -588,7 +588,7 @@ export default function AcuerdoCalc() {
                                 value={fields.gastosJudiciales}
                                 onChange={e => {
                                     const raw = e.target.value.replace(/\D/g, '')
-                                    set('gastosJudiciales', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                    set('gastosJudiciales', raw === '' ? '' : formatMiles(Number(raw)))
                                 }}
                                 onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                             />
@@ -661,7 +661,7 @@ export default function AcuerdoCalc() {
                             value={fields.abonoInicial}
                             onChange={e => {
                                 const raw = e.target.value.replace(/\D/g, '')
-                                const formatted = raw === '' ? '' : Number(raw).toLocaleString('es-CL')
+                                const formatted = raw === '' ? '' : formatMiles(Number(raw))
                                 setPie30(false)
                                 set('abonoInicial', formatted)
                             }}
@@ -789,7 +789,7 @@ export default function AcuerdoCalc() {
                                     Interés mensual
                                     {ajuste !== 0 && (
                                         <span className={`ajuste-badge ${ajuste > 0 ? 'pos' : 'neg'}`}>
-                                            {ajuste > 0 ? '+' : ''}{Math.round(ajuste).toLocaleString('es-CL')}
+                                            {ajuste > 0 ? '+' : ''}{formatMiles(ajuste)}
                                         </span>
                                     )}
                                 </span>
@@ -1028,7 +1028,7 @@ export default function AcuerdoCalc() {
                                         value={doc.montoDerivado}
                                         onChange={e => {
                                             const raw = e.target.value.replace(/\D/g, '')
-                                            setDocField('montoDerivado', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                            setDocField('montoDerivado', raw === '' ? '' : formatMiles(Number(raw)))
                                         }} />
                                 </div>
                                 <div className="form-group">
@@ -1037,7 +1037,7 @@ export default function AcuerdoCalc() {
                                         value={doc.abonoClinico}
                                         onChange={e => {
                                             const raw = e.target.value.replace(/\D/g, '')
-                                            setDocField('abonoClinico', raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                            setDocField('abonoClinico', raw === '' ? '' : formatMiles(Number(raw)))
                                         }} />
                                 </div>
                                 <div className="form-group doc-col-full">

@@ -79,7 +79,12 @@ function acortarFechaTexto(str) {
     return `${partes[0]}-${partes[1]}-${partes[2].slice(-2)}`
 }
 
-const miles = (n) => Math.round(n).toLocaleString('es-CL')
+// Formato chileno (1.234.567) sin depender del idioma del navegador
+const miles = (n) => {
+    const e = Math.round(n)
+    const grupos = Math.abs(e).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+    return (e < 0 ? '-' : '') + grupos
+}
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 /** Rutas internas del MHTML (mismo esquema que usa Word al guardar) */

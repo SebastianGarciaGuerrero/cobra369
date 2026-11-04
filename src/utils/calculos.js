@@ -76,13 +76,22 @@ export function calcularHonorariosJudicial(capital, uf) {
 /**
  * Formatea número a pesos chilenos
  */
+/**
+ * Agrupa los miles con puntos (formato chileno), SIN depender del idioma
+ * del navegador. Así el resultado es idéntico en todos los equipos; antes
+ * se usaba Intl/toLocaleString('es-CL') y en navegadores sin el locale
+ * chileno se caía a formato gringo ($ con comas, o "CLP 1,234").
+ * Ej: 1234567 -> "1.234.567"
+ */
+export function formatMiles(n) {
+    const e = Math.round(n)
+    const grupos = Math.abs(e).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+    return (e < 0 ? '-' : '') + grupos
+}
+
 export function formatCLP(n) {
-    return new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(Math.round(n))
+    const e = Math.round(n)
+    return (e < 0 ? '-$' : '$') + formatMiles(Math.abs(e))
 }
 
 /**

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcularHonorarios369, calcularHonorariosJudicial, formatCLP, parseCLPInput } from '../utils/calculos'
+import { calcularHonorarios369, calcularHonorariosJudicial, formatCLP, formatMiles, parseCLPInput } from '../utils/calculos'
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import BtnTraerUF from '../components/BtnTraerUF'
@@ -76,7 +76,7 @@ export default function Honorarios369() {
                             value={capital}
                             onChange={e => {
                                 const raw = e.target.value.replace(/\D/g, '')
-                                setCapital(raw === '' ? '' : Number(raw).toLocaleString('es-CL'))
+                                setCapital(raw === '' ? '' : formatMiles(Number(raw)))
                             }}
                             onKeyDown={e => e.key === 'Enter' && handleCalcular()}
                         />
