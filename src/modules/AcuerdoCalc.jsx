@@ -4,6 +4,8 @@ import { construirAcuerdoHTML, descargarWord, cargarLogoBase64, FILIALES, fechaL
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import BtnTraerUF from '../components/BtnTraerUF'
+import { useScrollAlResultado } from '../utils/useScrollAlResultado'
+import { copiarTexto, compartirODescargar } from '../utils/clipboard'
 import logoHadad from '../assets/logo-hadad-hd.png'
 
 const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
@@ -69,12 +71,13 @@ export default function AcuerdoCalc() {
     const [fechas, setFechas] = useState([])
     const [error, setError] = useState('')
     const [copiedTabla, setCopiedTabla] = useState(false)
-    const [copiedImg, setCopiedImg] = useState(false)
+    const [copiedImg, setCopiedImg] = useState(null) // null | 'copiada' | 'compartida' | 'descargada'
     const [ajuste, setAjuste] = useState(0)
     const [loading, setLoading] = useState(false)
     const [uf, setUf] = useState(() => cargarUF())
     const [modalidad, setModalidad] = useState('extrajudicial')
     const [calcId, setCalcId] = useState(0)
+    const resultadoRef = useScrollAlResultado(calcId)
     const [pie30, setPie30] = useState(false)
     const [flow, setFlow] = useState(false)
     const [panelDoc, setPanelDoc] = useState(false)
@@ -235,7 +238,7 @@ export default function AcuerdoCalc() {
         setCalcId(n => n + 1)
     }
 
-    function handleCopiarTabla() {
+    async function handleCopiarTabla() {
         if (!result) return
 
         const conGastos = modalidad === 'judicial'
@@ -300,9 +303,7 @@ export default function AcuerdoCalc() {
             Math.round(result.abonoInicial),
         ].join('\t') + '\n' : ''
 
-        const htmlBlob = new Blob([html], { type: 'text/html' })
-        const textBlob = new Blob(
-            [headers.join('\t') + '\n' + pieLine +
+        const textoPlano = headers.join('\t') + '\n' + pieLine +
                 result.filas.map((f, i) => [
                     f.nro,
                     fechas[i] ? formatFecha(fechas[i]) : '',
@@ -313,13 +314,20 @@ export default function AcuerdoCalc() {
                     ...(conFlow ? [Math.round(f.flow)] : []),
                     totalAjustado,
                 ].join('\t')).join('\n') +
-                '\nTOTAL\t' + granTotal],
-            { type: 'text/plain' }
-        )
+                '\nTOTAL\t' + granTotal
 
-        navigator.clipboard.write([
-            new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob })
-        ])
+        try {
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'text/html': new Blob([html], { type: 'text/html' }),
+                    'text/plain': new Blob([textoPlano], { type: 'text/plain' }),
+                })
+            ])
+        } catch {
+            // Sin soporte para copiar HTML (algunos celulares): al menos el
+            // texto tabulado, que se pega bien en Excel y Word.
+            if (!(await copiarTexto(textoPlano))) return
+        }
 
         setCopiedTabla(true)
         setTimeout(() => setCopiedTabla(false), 2500)
@@ -327,7 +335,22 @@ export default function AcuerdoCalc() {
 
     async function handleCopiarImagen() {
         if (!result) return
+        // La promesa va DIRECTO al ClipboardItem: así Safari/iOS no pierde el
+        // permiso del clic mientras se dibuja la imagen.
+        const blobPromise = dibujarImagenResumen()
+        let estado = 'copiada'
+        try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })])
+        } catch {
+            // Celulares sin portapapeles de imágenes → menú Compartir o descarga
+            estado = await compartirODescargar(await blobPromise, 'resumen-acuerdo.png')
+        }
+        if (!estado) return
+        setCopiedImg(estado)
+        setTimeout(() => setCopiedImg(null), 2500)
+    }
 
+    async function dibujarImagenResumen() {
         const conPIE = result.abonoInicial > 0
         const filasImg = []
         if (conPIE) filasImg.push({
@@ -456,11 +479,7 @@ export default function AcuerdoCalc() {
         ctx.font = 'italic 11px Arial'
         ctx.fillText('Este resumen es solo informativo y no constituye un documento oficial.', M, y + 22)
 
-        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-
-        setCopiedImg(true)
-        setTimeout(() => setCopiedImg(false), 2500)
+        return new Promise(res => canvas.toBlob(res, 'image/png'))
     }
 
     const totalAjustado = result ? Math.round(result.totalCuota + ajuste) : 0
@@ -527,12 +546,14 @@ export default function AcuerdoCalc() {
             <div className="form-card">
                 <div className="mode-tabs">
                     <button
+                        type="button"
                         className={`mode-tab ${modalidad === 'extrajudicial' ? 'active' : ''}`}
                         onClick={() => switchModalidad('extrajudicial')}
                     >
                         Extrajudicial
                     </button>
                     <button
+                        type="button"
                         className={`mode-tab judicial ${modalidad === 'judicial' ? 'active' : ''}`}
                         onClick={() => switchModalidad('judicial')}
                     >
@@ -710,7 +731,7 @@ export default function AcuerdoCalc() {
             </div>
 
             {result && (
-                <div className="result-card">
+                <div className="result-card" ref={resultadoRef}>
                     <div className="result-header">
                         <div className="rh-left">
                             <h3>Acuerdo generado</h3>
@@ -823,11 +844,13 @@ export default function AcuerdoCalc() {
                                 <div className="resumen-val-wrap">
                                     <div className="round-controls">
                                         <button
+                                            type="button"
                                             className="round-btn"
                                             onClick={() => handleRedondear('up')}
                                             title="Redondear hacia arriba al millar"
                                         >▲</button>
                                         <button
+                                            type="button"
                                             className="round-btn"
                                             onClick={() => handleRedondear('down')}
                                             title="Redondear hacia abajo al millar"
@@ -847,6 +870,7 @@ export default function AcuerdoCalc() {
                         <h4 className="section-label">Detalle cuotas</h4>
                         <div className="btns-copy-row">
                             <button
+                                type="button"
                                 className={`btn-flow ${flow ? 'active' : ''}`}
                                 onClick={toggleFlow}
                                 title={`Agregar comisión Flow (${COMISION_FLOW_PCT.toString().replace('.', ',')}% del saldo capital, repartida en las cuotas)`}
@@ -854,16 +878,21 @@ export default function AcuerdoCalc() {
                                 {flow ? '✓ Comisión Flow' : '＋ Comisión Flow'}
                             </button>
                             <button
+                                type="button"
                                 className={`btn-copy-tabla ${copiedTabla ? 'copied' : ''}`}
                                 onClick={handleCopiarTabla}
                             >
                                 {copiedTabla ? '✓ Copiado para Word' : '📋 Copiar tabla para Word'}
                             </button>
                             <button
+                                type="button"
                                 className={`btn-copy-tabla ${copiedImg ? 'copied' : ''}`}
                                 onClick={handleCopiarImagen}
                             >
-                                {copiedImg ? '✓ Imagen copiada' : '🖼️ Copiar imagen para deudor'}
+                                {copiedImg === 'copiada' ? '✓ Imagen copiada'
+                                    : copiedImg === 'compartida' ? '✓ Imagen compartida'
+                                    : copiedImg === 'descargada' ? '✓ Imagen descargada'
+                                    : '🖼️ Copiar imagen para deudor'}
                             </button>
                         </div>
                     </div>
@@ -886,7 +915,7 @@ export default function AcuerdoCalc() {
                                             {conGastos && <th>Gastos jud.</th>}
                                             {conFlow && <th>Comisión Flow</th>}
                                             <th>Total cuota</th>
-                                            <th></th>
+                                            <th aria-label="Copiar"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -896,42 +925,42 @@ export default function AcuerdoCalc() {
                                                 <td className="col-fecha">
                                                     {fields.fechaAbono.trim() !== '' ? fields.fechaAbono : <span className="no-fecha">—</span>}
                                                 </td>
-                                                <td>{formatCLP(result.capPIE)}</td>
-                                                <td className="col-int">{formatCLP(0)}</td>
-                                                <td className="col-hon">{formatCLP(result.honPIE)}</td>
-                                                {conGastos && <td className="col-hon">{formatCLP(0)}</td>}
-                                                {conFlow && <td className="col-hon">{formatCLP(0)}</td>}
+                                                <td className="cell-detalle" data-label="Abono clínica">{formatCLP(result.capPIE)}</td>
+                                                <td className="cell-detalle col-int" data-label="Interés">{formatCLP(0)}</td>
+                                                <td className="cell-detalle col-hon" data-label="Honorarios">{formatCLP(result.honPIE)}</td>
+                                                {conGastos && <td className="cell-detalle col-hon" data-label="Gastos jud.">{formatCLP(0)}</td>}
+                                                {conFlow && <td className="cell-detalle col-hon" data-label="Comisión Flow">{formatCLP(0)}</td>}
                                                 <td className="col-total">{formatCLP(result.abonoInicial)}</td>
-                                                <td><CopyBtn value={Math.round(result.abonoInicial)} /></td>
+                                                <td className="col-copy"><CopyBtn value={Math.round(result.abonoInicial)} /></td>
                                             </tr>
                                         )}
                                         {result.filas.map((f, i) => (
                                             <tr key={f.nro}>
-                                                <td className="col-nro">{f.nro}</td>
+                                                <td className="col-nro" data-label="Cuota">{f.nro}</td>
                                                 <td className="col-fecha">
                                                     {fechas[i] ? formatFecha(fechas[i]) : <span className="no-fecha">—</span>}
                                                 </td>
-                                                <td>{formatCLP(f.capital)}</td>
-                                                <td className={`col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
+                                                <td className="cell-detalle" data-label="Abono clínica">{formatCLP(f.capital)}</td>
+                                                <td className={`cell-detalle col-int ${ajuste !== 0 ? 'val-ajustado' : ''}`} data-label="Interés">
                                                     {formatCLP(interesFila(f))}
                                                 </td>
-                                                <td className="col-hon">{formatCLP(f.honorarios)}</td>
-                                                {conGastos && <td className="col-hon">{formatCLP(f.gastosJud)}</td>}
-                                                {conFlow && <td className="col-flow">{formatCLP(f.flow)}</td>}
+                                                <td className="cell-detalle col-hon" data-label="Honorarios">{formatCLP(f.honorarios)}</td>
+                                                {conGastos && <td className="cell-detalle col-hon" data-label="Gastos jud.">{formatCLP(f.gastosJud)}</td>}
+                                                {conFlow && <td className="cell-detalle col-flow" data-label="Comisión Flow">{formatCLP(f.flow)}</td>}
                                                 <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
                                                     {formatCLP(totalAjustado)}
                                                 </td>
-                                                <td><CopyBtn value={totalAjustado} /></td>
+                                                <td className="col-copy"><CopyBtn value={totalAjustado} /></td>
                                             </tr>
                                         ))}
                                     </tbody>
                                     <tfoot>
                                         <tr className="tfoot-row">
-                                            <td colSpan={colsAntesTotal} style={{ textAlign: 'center' }}>TOTAL</td>
+                                            <td colSpan={colsAntesTotal} className="col-tfoot-label" style={{ textAlign: 'center' }}>TOTAL</td>
                                             <td className={`col-total ${ajuste !== 0 ? 'val-ajustado' : ''}`}>
                                                 {formatCLP(granTotal)}
                                             </td>
-                                            <td><CopyBtn value={granTotal} /></td>
+                                            <td className="col-copy"><CopyBtn value={granTotal} /></td>
                                         </tr>
                                     </tfoot>
                                 </table>

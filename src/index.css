@@ -19,6 +19,18 @@
   --danger: #f87171;
   --warn: #fbbf24;
   --green: #34d399;
+  /* Variantes para transparencias y textos (permiten re-temar la app) */
+  --primary-rgb: 99, 102, 241;
+  --primary-text: #a5b4fc;
+  --on-primary: #fff;
+  --green-rgb: 52, 211, 153;
+  --warn-rgb: 251, 191, 36;
+  --warn-text: #fde68a;
+  --danger-rgb: 248, 113, 113;
+  --border-rgb: 63, 79, 100;
+  --hon: #fca5a5;
+  --int: #7dd3fc;
+  --shadow: rgba(0, 0, 0, .4);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -64,7 +76,7 @@ input {
 }
 
 .app-footer a {
-  color: #a5b4fc;
+  color: var(--primary-text);
   text-decoration: none;
   font-weight: 600;
   transition: color .15s;
@@ -149,9 +161,9 @@ input {
 }
 
 .nav-link.active {
-  background: rgba(99, 102, 241, .15);
+  background: rgba(var(--primary-rgb), .15);
   border-color: var(--primary);
-  color: #a5b4fc;
+  color: var(--primary-text);
 }
 
 .nav-link-icon {
@@ -198,7 +210,7 @@ input {
   height: 68px;
   display: block;
   margin: 0 auto 1.2rem;
-  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .4));
+  filter: drop-shadow(0 10px 22px var(--shadow));
 }
 
 .home-header h1 {
@@ -217,7 +229,7 @@ input {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(275px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(275px, 100%), 1fr));
   gap: 1.25rem;
 }
 
@@ -238,7 +250,7 @@ input {
 
 .module-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .4);
+  box-shadow: 0 12px 32px var(--shadow);
 }
 
 .card-icon {
@@ -344,7 +356,7 @@ input {
 
 .form-group input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, .2);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .2);
 }
 
 .form-group input::placeholder {
@@ -360,7 +372,7 @@ input {
 .btn-primary {
   width: 100%;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   border: none;
   border-radius: 8px;
   padding: .8rem;
@@ -439,9 +451,9 @@ input {
 
 .badge-uf {
   display: inline-block;
-  background: rgba(99, 102, 241, .15);
-  border: 1px solid rgba(99, 102, 241, .3);
-  color: #a5b4fc;
+  background: rgba(var(--primary-rgb), .15);
+  border: 1px solid rgba(var(--primary-rgb), .3);
+  color: var(--primary-text);
   padding: .3rem .85rem;
   border-radius: 999px;
   font-size: .85rem;
@@ -473,7 +485,7 @@ input {
 
 .tranche-table td {
   padding: .72rem .75rem;
-  border-bottom: 1px solid rgba(63, 79, 100, .5);
+  border-bottom: 1px solid rgba(var(--border-rgb), .5);
 }
 
 .col-pct {
@@ -482,7 +494,7 @@ input {
 }
 
 .col-hon {
-  color: #fca5a5;
+  color: var(--hon);
   font-weight: 600;
 }
 
@@ -518,11 +530,11 @@ input {
 
 .total-box.highlight {
   border-color: var(--primary);
-  background: rgba(99, 102, 241, .1);
+  background: rgba(var(--primary-rgb), .1);
 }
 
 .total-box.highlight .t-value {
-  color: #a5b4fc;
+  color: var(--primary-text);
   font-size: 1.4rem;
 }
 
@@ -591,7 +603,7 @@ input {
 
 .total-box.highlight-green {
   border-color: var(--green);
-  background: rgba(52, 211, 153, .08);
+  background: rgba(var(--green-rgb), .08);
 }
 
 .total-box.highlight-green .t-value {
@@ -656,12 +668,12 @@ input {
 }
 
 .col-int {
-  color: #7dd3fc;
+  color: var(--int);
   font-weight: 600;
 }
 
 .col-total {
-  color: #a5b4fc;
+  color: var(--primary-text);
   font-weight: 700;
 }
 
@@ -673,7 +685,7 @@ input {
 }
 
 .tfoot-row .col-total {
-  color: #a5b4fc;
+  color: var(--primary-text);
   font-size: 1rem;
 }
 
@@ -705,7 +717,7 @@ input {
 .copy-inline:hover {
   color: var(--text);
   border-color: var(--primary);
-  background: rgba(99, 102, 241, .1);
+  background: rgba(var(--primary-rgb), .1);
 }
 
 .copy-inline.copied {
@@ -728,8 +740,8 @@ input {
 
 /* ── RESUMEN MENSUAL ── */
 .resumen-section {
-  background: rgba(99, 102, 241, .06);
-  border: 1px solid rgba(99, 102, 241, .25);
+  background: rgba(var(--primary-rgb), .06);
+  border: 1px solid rgba(var(--primary-rgb), .25);
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1rem;
@@ -755,7 +767,7 @@ input {
   justify-content: space-between;
   align-items: center;
   padding: .45rem .25rem;
-  border-bottom: 1px solid rgba(63, 79, 100, .35);
+  border-bottom: 1px solid rgba(var(--border-rgb), .35);
 }
 
 .resumen-row:last-child {
@@ -788,7 +800,7 @@ input {
 
 .resumen-total {
   font-size: 1.1rem;
-  color: #a5b4fc;
+  color: var(--primary-text);
 }
 
 /* ── FECHAS BOX ── */
@@ -796,13 +808,13 @@ input {
   display: flex;
   align-items: flex-start;
   gap: .75rem;
-  background: rgba(251, 191, 36, .06);
-  border: 1px solid rgba(251, 191, 36, .25);
+  background: rgba(var(--warn-rgb), .06);
+  border: 1px solid rgba(var(--warn-rgb), .25);
   border-radius: 8px;
   padding: .85rem 1rem;
   margin-bottom: 1.25rem;
   font-size: .875rem;
-  color: #fde68a;
+  color: var(--warn-text);
   line-height: 1.6;
 }
 
@@ -882,7 +894,7 @@ input {
 .doc-grid select:focus,
 .doc-grid textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, .2);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .2);
 }
 
 .btn-word {
@@ -911,7 +923,7 @@ input {
 }
 
 .btn-flow.active {
-  background: rgba(52, 211, 153, .15);
+  background: rgba(var(--green-rgb), .15);
   border-color: var(--green);
   color: var(--green);
 }
@@ -925,7 +937,7 @@ input {
 .btn-copy-tabla {
   background: var(--surface2);
   border: 1px solid var(--primary);
-  color: #a5b4fc;
+  color: var(--primary-text);
   padding: .35rem 1rem;
   border-radius: 6px;
   font-size: .8rem;
@@ -938,7 +950,7 @@ input {
 }
 
 .btn-copy-tabla:hover {
-  background: rgba(99, 102, 241, .15);
+  background: rgba(var(--primary-rgb), .15);
 }
 
 .btn-copy-tabla.copied {
@@ -994,8 +1006,8 @@ input {
 
 /* ── PIE SECTION ── */
 .pie-section {
-  background: rgba(52, 211, 153, .06);
-  border: 1px solid rgba(52, 211, 153, .25);
+  background: rgba(var(--green-rgb), .06);
+  border: 1px solid rgba(var(--green-rgb), .25);
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.25rem;
@@ -1030,7 +1042,7 @@ input {
 }
 
 .round-btn:hover {
-  background: rgba(99, 102, 241, .2);
+  background: rgba(var(--primary-rgb), .2);
   border-color: var(--primary);
   color: var(--text);
 }
@@ -1045,12 +1057,12 @@ input {
 }
 
 .ajuste-badge.pos {
-  background: rgba(52, 211, 153, .15);
+  background: rgba(var(--green-rgb), .15);
   color: var(--green);
 }
 
 .ajuste-badge.neg {
-  background: rgba(248, 113, 113, .15);
+  background: rgba(var(--danger-rgb), .15);
   color: var(--danger);
 }
 
@@ -1120,8 +1132,8 @@ input {
   font-size: .72rem;
   font-weight: 700;
   color: var(--green);
-  background: rgba(52, 211, 153, .12);
-  border: 1px solid rgba(52, 211, 153, .3);
+  background: rgba(var(--green-rgb), .12);
+  border: 1px solid rgba(var(--green-rgb), .3);
   padding: .15rem .6rem;
   border-radius: 999px;
   animation: popIn .35s ease;
@@ -1146,7 +1158,7 @@ input {
 
 .result-grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 1.25rem;
   margin-bottom: 1.25rem;
 }
@@ -1201,15 +1213,15 @@ input {
 }
 
 .pill-pie.active {
-  background: rgba(99, 102, 241, .18);
+  background: rgba(var(--primary-rgb), .18);
   border-color: var(--primary);
-  color: #a5b4fc;
+  color: var(--primary-text);
 }
 
 /* ── BOTÓN TRAER UF ── */
 .btn-traer-uf {
-  background: rgba(52, 211, 153, .12);
-  border: 1px solid rgba(52, 211, 153, .35);
+  background: rgba(var(--green-rgb), .12);
+  border: 1px solid rgba(var(--green-rgb), .35);
   color: var(--green);
   border-radius: 999px;
   padding: .08rem .6rem;
@@ -1221,7 +1233,7 @@ input {
 }
 
 .btn-traer-uf:hover {
-  background: rgba(52, 211, 153, .2);
+  background: rgba(var(--green-rgb), .2);
 }
 
 .btn-traer-uf.cargando {
@@ -1231,8 +1243,8 @@ input {
 }
 
 .btn-traer-uf.error {
-  background: rgba(248, 113, 113, .12);
-  border-color: rgba(248, 113, 113, .4);
+  background: rgba(var(--danger-rgb), .12);
+  border-color: rgba(var(--danger-rgb), .4);
   color: var(--danger);
 }
 
@@ -1262,13 +1274,13 @@ input {
 }
 
 .mode-tab.active {
-  background: rgba(99, 102, 241, .15);
+  background: rgba(var(--primary-rgb), .15);
   border-color: var(--primary);
-  color: #a5b4fc;
+  color: var(--primary-text);
 }
 
 .mode-tab.judicial.active {
-  background: rgba(251, 191, 36, .12);
+  background: rgba(var(--warn-rgb), .12);
   border-color: var(--warn);
   color: var(--warn);
 }
@@ -1300,5 +1312,348 @@ input {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+/* =====================================================================
+   VERSIÓN MÓVIL
+   ===================================================================== */
+
+/* El resultado se acomoda debajo del navbar fijo al hacer scroll hacia él */
+.result-card {
+  scroll-margin-top: var(--scroll-offset, 72px);
+}
+
+/* ── Tablet y celular: una sola columna (formulario arriba, resultado abajo) ── */
+@media (max-width: 960px) {
+  .calc-layout.two-col {
+    display: block;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .calc-layout.two-col .form-card {
+    position: static;
+    margin-bottom: 1.25rem;
+  }
+}
+
+/* ── Celular ── */
+@media (max-width: 640px) {
+  /* Navbar: íconos con texto debajo, todo cabe sin desbordar */
+  .navbar {
+    gap: .5rem;
+  }
+
+  .nav-links {
+    gap: .15rem;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    gap: .15rem;
+    padding: .3rem .55rem;
+    font-size: .68rem;
+    min-width: 3.6rem;
+  }
+
+  .nav-link-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Menos relleno lateral para aprovechar el ancho */
+  .module-view {
+    padding: 1.25rem .85rem 2rem;
+  }
+
+  .mv-header {
+    margin-bottom: 1rem;
+    padding-bottom: .9rem;
+  }
+
+  .mv-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .mv-desc {
+    font-size: .85rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-card,
+  .result-card {
+    padding: 1.1rem;
+    border-radius: 10px;
+  }
+
+  .result-header {
+    flex-wrap: wrap;
+    gap: .6rem;
+  }
+
+  .badge-uf {
+    margin-bottom: 0;
+  }
+
+  .t-value {
+    font-size: 1.15rem;
+  }
+
+  .total-box.highlight .t-value {
+    font-size: 1.3rem;
+  }
+
+  .resumen-section,
+  .pie-section {
+    padding: 1rem;
+  }
+
+  .resumen-row {
+    gap: .5rem;
+  }
+
+  .resumen-val-wrap {
+    flex-shrink: 0;
+  }
+
+  /* Botones de la sección "Detalle cuotas": debajo del título y a todo el ancho */
+  .section-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .6rem;
+  }
+
+  .btns-copy-row {
+    justify-content: stretch;
+  }
+
+  .btns-copy-row > button {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: .55rem .8rem;
+  }
+
+  .doc-section .section-header-row > button {
+    justify-content: center;
+    padding: .55rem .8rem;
+  }
+
+  /* Formulario y datos del documento en una columna */
+  .doc-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-col-2 {
+    grid-column: auto;
+  }
+
+  /* Evita que iOS haga zoom al tocar un campo (requiere >= 16px) */
+  .form-group input,
+  .doc-grid select,
+  .doc-grid textarea {
+    font-size: 16px;
+  }
+
+  /* ── Tabla de tramos → filas apiladas ── */
+  .tramos-table thead {
+    display: none;
+  }
+
+  .tramos-table,
+  .tramos-table tbody {
+    display: block;
+  }
+
+  .tramos-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .35rem .75rem;
+    padding: .75rem 0;
+    border-bottom: 1px solid rgba(var(--border-rgb), .5);
+  }
+
+  .tramos-table td {
+    display: block;
+    padding: 0;
+    border: none;
+  }
+
+  .tramos-table .col-tramo {
+    flex: 1 1 auto;
+    order: 1;
+    font-weight: 700;
+  }
+
+  .tramos-table .col-pct {
+    order: 2;
+  }
+
+  .tramos-table tr::after {
+    content: '';
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .tramos-table .col-base,
+  .tramos-table .col-hon {
+    order: 4;
+    flex: 1 1 0;
+  }
+
+  .tramos-table .col-copy {
+    order: 5;
+  }
+
+  .tramos-table td[data-label]::before,
+  .cuota-table td.cell-detalle::before {
+    content: attr(data-label);
+    display: block;
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--muted);
+    margin-bottom: .1rem;
+  }
+
+  /* ── Tabla de cuotas → una tarjeta por cuota ── */
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .cuota-table thead {
+    display: none;
+  }
+
+  .cuota-table,
+  .cuota-table tbody,
+  .cuota-table tfoot {
+    display: block;
+  }
+
+  .cuota-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem .75rem;
+    padding: .75rem .85rem;
+    margin-bottom: .5rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .cuota-table td,
+  .cuota-table th {
+    white-space: normal;
+  }
+
+  .cuota-table td {
+    display: block;
+    padding: 0;
+    border: none;
+  }
+
+  .cuota-table .col-nro {
+    order: 1;
+    text-align: left;
+    font-size: .9rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .cuota-table .col-nro::before {
+    content: attr(data-label) ' ';
+  }
+
+  .cuota-table .col-fecha {
+    order: 2;
+    flex: 1 1 auto;
+  }
+
+  .cuota-table .col-total {
+    order: 3;
+    font-size: 1rem;
+  }
+
+  .cuota-table .col-copy {
+    order: 4;
+  }
+
+  .cuota-table tbody tr::after {
+    content: '';
+    order: 5;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .cuota-table .cell-detalle {
+    order: 6;
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: .85rem;
+  }
+
+  .cuota-table td.cell-detalle::before {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: .6rem;
+  }
+
+  .cuota-table .tfoot-row {
+    background: transparent;
+    border-width: 2px;
+    margin-bottom: 1.25rem;
+  }
+
+  .cuota-table .tfoot-row td {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .cuota-table .col-tfoot-label {
+    flex: 1 1 auto;
+    text-align: left !important;
+    font-size: .8rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+}
+
+/* ── Pantallas muy angostas: formularios en una sola columna ── */
+@media (max-width: 480px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-logo {
+    height: 34px;
+    width: 34px;
+  }
+}
+
+/* ── Pantallas táctiles: botones pequeños con área de toque más grande ── */
+@media (pointer: coarse) {
+  .copy-inline {
+    min-width: 2rem;
+    min-height: 2rem;
+    font-size: .9rem;
+  }
+
+  .round-controls {
+    gap: 4px;
+  }
+
+  .round-btn {
+    width: 2rem;
+    height: 1.5rem;
+    font-size: .7rem;
+  }
+
+  .btn-traer-uf,
+  .pill-pie {
+    padding: .25rem .7rem;
   }
 }

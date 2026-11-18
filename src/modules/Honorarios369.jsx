@@ -3,6 +3,7 @@ import { calcularHonorarios369, calcularHonorariosJudicial, formatCLP, formatMil
 import { guardarUF, cargarUF } from '../utils/ufStorage'
 import CopyBtn from '../components/CopyBtn'
 import BtnTraerUF from '../components/BtnTraerUF'
+import { useScrollAlResultado } from '../utils/useScrollAlResultado'
 
 export default function Honorarios369() {
     const [capital, setCapital] = useState('')
@@ -11,6 +12,7 @@ export default function Honorarios369() {
     const [error, setError] = useState('')
     const [modalidad, setModalidad] = useState('extrajudicial')
     const [calcId, setCalcId] = useState(0)
+    const resultadoRef = useScrollAlResultado(calcId)
 
     function handleCalcular() {
         setError('')
@@ -53,12 +55,14 @@ export default function Honorarios369() {
             <div className="form-card">
                 <div className="mode-tabs">
                     <button
+                        type="button"
                         className={`mode-tab ${modalidad === 'extrajudicial' ? 'active' : ''}`}
                         onClick={() => switchModalidad('extrajudicial')}
                     >
                         Extrajudicial
                     </button>
                     <button
+                        type="button"
                         className={`mode-tab judicial ${modalidad === 'judicial' ? 'active' : ''}`}
                         onClick={() => switchModalidad('judicial')}
                     >
@@ -104,7 +108,7 @@ export default function Honorarios369() {
             </div>
 
             {resultado && (
-                <div className="result-card">
+                <div className="result-card" ref={resultadoRef}>
                     <div className="result-header">
                         <div className="rh-left">
                             <h3>Resultado</h3>
@@ -115,18 +119,18 @@ export default function Honorarios369() {
                         )}
                     </div>
 
-                    <table className="tranche-table">
+                    <table className="tranche-table tramos-table">
                         <thead>
-                            <tr><th>Tramo</th><th>Monto base</th><th>%</th><th>Honorarios</th><th></th></tr>
+                            <tr><th>Tramo</th><th>Monto base</th><th>%</th><th>Honorarios</th><th aria-label="Copiar"></th></tr>
                         </thead>
                         <tbody>
                             {tranches.map((t, i) => (
                                 <tr key={i}>
-                                    <td>{t.label}</td>
-                                    <td>{formatCLP(t.monto)}</td>
+                                    <td className="col-tramo">{t.label}</td>
+                                    <td className="col-base" data-label="Monto base">{formatCLP(t.monto)}</td>
                                     <td className="col-pct">{t.pct}</td>
-                                    <td className="col-hon">{formatCLP(t.hon)}</td>
-                                    <td><CopyBtn value={Math.round(t.hon)} /></td>
+                                    <td className="col-hon" data-label="Honorarios">{formatCLP(t.hon)}</td>
+                                    <td className="col-copy"><CopyBtn value={Math.round(t.hon)} /></td>
                                 </tr>
                             ))}
                         </tbody>
